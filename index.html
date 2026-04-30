@@ -119,8 +119,12 @@ button{font-family:var(--font-body)}
 .t-pers.iedereen{background:var(--oker-pale);color:var(--oker-dark)}
 .t-pers.niet{background:#eee;color:var(--text-3)}
 .t-pers .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;background:currentColor;opacity:.6}
-.wd-task{background:#fff;border:1px solid var(--border);border-left:3px solid var(--prio-mid-bar);border-radius:5px;padding:6px 8px;font-size:11.5px;cursor:pointer;transition:all .15s;position:relative}
-.wd-task::before{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--pers-kleur,transparent)}
+.wd-task{background:#fff;border:1px solid var(--border);border-left:3px solid var(--prio-mid-bar);border-radius:5px;padding:6px 8px;font-size:11.5px;cursor:pointer;transition:all .15s}
+.wd-pers{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:600;background:var(--groen-mid);color:var(--groen-deep);margin-top:3px}
+.wd-pers.iedereen{background:var(--oker-pale);color:var(--oker-dark)}
+.wd-pers.niet{background:#eee;color:var(--text-3)}
+.wd-time{font-size:10px;color:var(--oker-dark);font-weight:600;margin-top:3px;display:block}
+.wd-time.deadline{color:var(--text-3)}
 .t-project{font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .t-project.vdz{color:#1e4d6f}
 .t-time{font-weight:600;color:var(--oker-dark);font-size:11px}
@@ -474,6 +478,19 @@ function startOfWeek(s){const d=pd(s);const dow=(d.getDay()+6)%7;d.setDate(d.get
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
 function formatShortDate(s){const d=pd(s);return d.getDate()+' '+MNL_SHORT[d.getMonth()]}
 
+// Een tijd is alleen geldig als het exact "HH:MM" is (zoals "09:00").
+// Filtert datum-objecten en lege strings die soms uit Google Sheets komen.
+function isGeldigeTijd(t){
+  if(!t) return false;
+  const s = String(t).trim();
+  return /^\d{2}:\d{2}$/.test(s);
+}
+
+// Normaliseer tijd voor weergave en filter
+function tijdStr(t){
+  return isGeldigeTijd(t) ? String(t).trim() : '';
+}
+
 /* ─── API CALLS ─── */
 function setStatus(state, msg){
   const el = document.getElementById('tb-status');
@@ -596,7 +613,8 @@ function hexToBg(hex){
 }
 
 function tHTML(t){
-  const dlInfo = t.datum && !t.tijd ? `<span class="t-time">📅 ${formatShortDate(t.datum)}</span>` : '';
+  const heeftTijd = isGeldigeTijd(t.tijd);
+  const dlInfo = t.datum && !heeftTijd ? `<span class="t-time">📅 ${formatShortDate(t.datum)}</span>` : '';
   return `
     <div class="task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
          ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)">
@@ -604,7 +622,7 @@ function tHTML(t){
       <div class="t-body" onclick="openModal(${t.id})">
         <div class="t-title">${esc(t.titel)}</div>
         <div class="t-meta">
-          ${t.tijd?`<span class="t-time">⏱ ${t.tijd}</span>`:dlInfo}
+          ${heeftTijd?`<span class="t-time">⏱ ${esc(t.tijd)}</span>`:dlInfo}
           <span class="t-pers ${persClass(t.persoon)}" style="${persStyle(t.persoon)}">${esc(t.persoon)}</span>
           <span class="t-project ${projClass(t.project)}">${esc(t.project||'Distrivers')}</span>
         </div>
@@ -625,7 +643,7 @@ function renderDag(){
 
   const ft=gf(), day=ft.filter(t=>t.datum===currentDate);
   let html='';
-  const untimed=day.filter(t=>!t.tijd);
+  const untimed=day.filter(t=>!isGeldigeTijd(t.tijd));
   // "Hele dag" drop zone — altijd zichtbaar zodat je items hier naartoe kunt slepen
   html+=`<div class="untimed-zone" data-target="untimed" data-date="${currentDate}"
               ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToUntimed(event,'${currentDate}')">`;
@@ -637,7 +655,7 @@ function renderDag(){
   }
   html+='</div>';
   HOURS.forEach(h=>{
-    const tasks=day.filter(t=>t.tijd===h);
+    const tasks=day.filter(t=>tijdStr(t.tijd)===h);
     html+=`<div class="timeslot"><div class="ts-time">${h}</div><div class="ts-lane" data-target="slot" data-date="${currentDate}" data-time="${h}"
               ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToSlot(event,'${currentDate}','${h}')">`;
     if(tasks.length)tasks.forEach(t=>{html+=tHTML(t)});
@@ -685,12 +703,13 @@ function renderWeek(){
            ondblclick="quickAdd('${ds}','')" onclick="goToDayFromWeek('${ds}')">`;
     if(day.length===0)html+='<div class="wd-empty">leeg</div>';
     else day.forEach(t=>{
+      const heeftTijd = isGeldigeTijd(t.tijd);
       html+=`<div class="wd-task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
-           style="--pers-kleur:${PERSOON_KLEUREN[t.persoon]||'transparent'}"
            ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)"
            onclick="event.stopPropagation();openModal(${t.id})">
-        <div class="wd-t-title" style="padding-right:14px">${esc(t.titel)}</div>
-        <div class="wd-t-time" style="color:${t.tijd?'var(--oker-dark)':'var(--text-3)'}">${t.tijd?'⏱ '+t.tijd+' · ':''}${esc(t.persoon)}</div>
+        <div class="wd-t-title">${esc(t.titel)}</div>
+        ${heeftTijd?`<span class="wd-time">⏱ ${esc(t.tijd)}</span>`:''}
+        <span class="wd-pers ${persClass(t.persoon)}" style="${persStyle(t.persoon)}">${esc(t.persoon)}</span>
       </div>`;
     });
     html+=`</div></div>`;
@@ -756,7 +775,7 @@ function openModal(id,prefDate,prefTime){
     document.getElementById('f-prio').value=t.prio;
     document.getElementById('f-pers').value=t.persoon;
     document.getElementById('f-datum').value=t.datum||'';
-    document.getElementById('f-tijd').value=t.tijd||'';
+    document.getElementById('f-tijd').value=tijdStr(t.tijd);
     if(t.laatst_gewijzigd_door){
       let when = '';
       if(t.laatst_gewijzigd_op){
