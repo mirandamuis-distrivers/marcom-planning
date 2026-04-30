@@ -204,6 +204,21 @@ button{font-family:var(--font-body)}
 .error-banner.show{display:block}
 .error-banner button{margin-left:10px;background:none;border:none;color:inherit;font-weight:700;cursor:pointer;font-size:14px}
 
+/* ─── NAME PICKER ─── */
+.name-picker{position:fixed;inset:0;background:rgba(42,58,48,.85);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:500;padding:20px}
+.name-picker.show{display:flex}
+.np-card{background:#fff;border-radius:var(--r);padding:34px 38px;max-width:420px;width:100%;box-shadow:var(--shadow-lg);text-align:center}
+.np-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.3px}
+.np-sub{font-size:13px;color:var(--text-2);margin-bottom:24px}
+.np-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.np-btn{padding:18px 8px;border:2px solid var(--border-strong);background:#fff;border-radius:var(--r-sm);font-size:15px;font-weight:600;color:var(--text);cursor:pointer;font-family:var(--font-body);transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:6px}
+.np-btn:hover{border-color:var(--oker);background:var(--oker-pale);transform:translateY(-1px);box-shadow:var(--shadow)}
+.np-btn .av{width:36px;height:36px;border-radius:50%;background:var(--groen-mid);color:var(--groen-deep);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.np-btn:hover .av{background:var(--oker);color:#fff}
+
+.tb-user{cursor:pointer}
+.tb-user:hover{background:rgba(255,255,255,.25)}
+
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:var(--groen-pale)}
 ::-webkit-scrollbar-thumb{background:var(--groen-dark);border-radius:5px;border:2px solid var(--groen-pale)}
@@ -226,6 +241,19 @@ button{font-family:var(--font-body)}
 
 <div class="error-banner" id="error-banner"></div>
 
+<div class="name-picker" id="name-picker">
+  <div class="np-card">
+    <div class="np-title">Wie ben jij?</div>
+    <div class="np-sub">Kies je naam om te beginnen. Wij onthouden hem op deze browser.</div>
+    <div class="np-grid">
+      <button class="np-btn" onclick="setMyName('Pam')"><span class="av">P</span>Pam</button>
+      <button class="np-btn" onclick="setMyName('Linda')"><span class="av">L</span>Linda</button>
+      <button class="np-btn" onclick="setMyName('Miranda')"><span class="av">M</span>Miranda</button>
+      <button class="np-btn" onclick="setMyName('Nina')"><span class="av">N</span>Nina</button>
+    </div>
+  </div>
+</div>
+
 <div class="topbar">
   <div class="tb-left">
     <div class="tb-brand">
@@ -239,7 +267,7 @@ button{font-family:var(--font-body)}
   </div>
   <div class="tb-right">
     <span class="tb-status synced" id="tb-status">● synced</span>
-    <div class="tb-user" id="tb-user-box" style="display:none">
+    <div class="tb-user" id="tb-user-box" style="display:none" onclick="showNamePicker()" title="Klik om van naam te wisselen">
       <div class="avatar" id="tb-avatar">?</div>
       <span id="tb-username">...</span>
     </div>
@@ -394,7 +422,7 @@ button{font-family:var(--font-body)}
    ═══════════════════════════════════════════════════════════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwWu5V3pSTaeNMXYUNkeZngUVanvyv9ZL3p0Pj1w9ItIOSnhYnP99OiaQupD10HYy_W/exec';
 
-const TEAMLEDEN = ['Pam','Linda','Miranda','Lotte','Iedereen','Niet toegewezen'];
+const TEAMLEDEN = ['Pam','Linda','Miranda','Nina','Lotte','Iedereen','Niet toegewezen'];
 const HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
 const DNL=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
 const MNL=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
@@ -406,7 +434,20 @@ let currentDate=fmtDate(new Date());
 let fPrio='alle', fPers='alle';
 let blOpen=true;
 let editingId=null;
-let currentUser='Onbekend';
+let currentUser = localStorage.getItem('marcom_user_name') || '';
+
+function setMyName(name){
+  currentUser = name;
+  localStorage.setItem('marcom_user_name', name);
+  document.getElementById('tb-username').textContent = currentUser;
+  document.getElementById('tb-avatar').textContent = currentUser.charAt(0).toUpperCase();
+  document.getElementById('tb-user-box').style.display = 'flex';
+  document.getElementById('name-picker').classList.remove('show');
+}
+
+function showNamePicker(){
+  document.getElementById('name-picker').classList.add('show');
+}
 let refreshTimer=null;
 
 /* ─── HELPERS ─── */
@@ -444,7 +485,7 @@ async function apiPost(action, payload){
   const res = await fetch(API_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({action, ...payload})
+    body: JSON.stringify({action, user: currentUser, ...payload})
   });
   if(!res.ok) throw new Error('Netwerkfout '+res.status);
   return res.json();
@@ -457,12 +498,8 @@ async function loadTaken(showSpinner=false){
     const r = await apiGet('list');
     if(!r.ok) throw new Error(r.error || 'Onbekende fout');
     taken = r.taken;
-    if(r.user) {
-      currentUser = r.user;
-      document.getElementById('tb-username').textContent = currentUser;
-      document.getElementById('tb-avatar').textContent = currentUser.charAt(0).toUpperCase();
-      document.getElementById('tb-user-box').style.display = 'flex';
-    }
+    // We gebruiken niet de server-naam meer, maar wat de gebruiker zelf koos.
+    // (r.user kan "Onbekend" zijn omdat de Apps Script "Iedereen" toegang heeft)
     setStatus('synced');
     render();
   } catch(e) {
@@ -870,6 +907,24 @@ async function start(){
     showError('De API_URL is nog niet ingesteld. Open dit bestand in een editor en plak de Web-app URL bovenaan het script.');
     return;
   }
+
+  // Toon naam-keuze als nog niet gekozen
+  if(!currentUser){
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('name-picker').classList.add('show');
+    // Wacht tot de gebruiker een naam kiest
+    await new Promise(resolve => {
+      const check = setInterval(()=>{
+        if(currentUser){ clearInterval(check); resolve(); }
+      }, 100);
+    });
+  } else {
+    // Al een naam? Toon hem in de header
+    document.getElementById('tb-username').textContent = currentUser;
+    document.getElementById('tb-avatar').textContent = currentUser.charAt(0).toUpperCase();
+    document.getElementById('tb-user-box').style.display = 'flex';
+  }
+
   await loadTaken(true);
   // Open op vandaag of dichtstbijzijnde datum met taken
   const today = fmtDate(new Date());
