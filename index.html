@@ -115,9 +115,12 @@ button{font-family:var(--font-body)}
 .t-body{flex:1;min-width:0}
 .t-title{font-weight:600;color:var(--text);font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .t-meta{font-size:11px;color:var(--text-2);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:400}
-.t-pers{display:inline-flex;align-items:center;gap:4px;background:var(--groen-mid);padding:1px 8px;border-radius:9px;font-size:10.5px;font-weight:600;color:var(--groen-deep)}
+.t-pers{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:9px;font-size:10.5px;font-weight:600;background:var(--groen-mid);color:var(--groen-deep)}
 .t-pers.iedereen{background:var(--oker-pale);color:var(--oker-dark)}
 .t-pers.niet{background:#eee;color:var(--text-3)}
+.t-pers .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;background:currentColor;opacity:.6}
+.wd-task{background:#fff;border:1px solid var(--border);border-left:3px solid var(--prio-mid-bar);border-radius:5px;padding:6px 8px;font-size:11.5px;cursor:pointer;transition:all .15s;position:relative}
+.wd-task::before{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--pers-kleur,transparent)}
 .t-project{font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .t-project.vdz{color:#1e4d6f}
 .t-time{font-weight:600;color:var(--oker-dark);font-size:11px}
@@ -148,7 +151,6 @@ button{font-family:var(--font-body)}
 .week-day.today .wd-cnt{color:rgba(255,255,255,.8)}
 .wd-body{padding:8px;display:flex;flex-direction:column;gap:5px;flex:1;cursor:pointer;min-height:200px}
 .wd-body:hover{background:var(--groen-pale)}
-.wd-task{background:#fff;border:1px solid var(--border);border-left:3px solid var(--prio-mid-bar);border-radius:5px;padding:6px 8px;font-size:11.5px;cursor:pointer;transition:all .15s}
 .wd-task:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
 .wd-task.prio-Hoog{border-left-color:var(--prio-hoog-bar)}
 .wd-task.prio-Laag{border-left-color:var(--prio-laag-bar)}
@@ -246,10 +248,10 @@ button{font-family:var(--font-body)}
     <div class="np-title">Wie ben jij?</div>
     <div class="np-sub">Kies je naam om te beginnen. Wij onthouden hem op deze browser.</div>
     <div class="np-grid">
-      <button class="np-btn" onclick="setMyName('Pam')"><span class="av">P</span>Pam</button>
-      <button class="np-btn" onclick="setMyName('Linda')"><span class="av">L</span>Linda</button>
-      <button class="np-btn" onclick="setMyName('Miranda')"><span class="av">M</span>Miranda</button>
-      <button class="np-btn" onclick="setMyName('Nina')"><span class="av">N</span>Nina</button>
+      <button class="np-btn" onclick="setMyName('Pam')"><span class="av" style="background:#d49493;color:#fff">P</span>Pam</button>
+      <button class="np-btn" onclick="setMyName('Linda')"><span class="av" style="background:#94a87a;color:#fff">L</span>Linda</button>
+      <button class="np-btn" onclick="setMyName('Miranda')"><span class="av" style="background:#9b8cb8;color:#fff">M</span>Miranda</button>
+      <button class="np-btn" onclick="setMyName('Nina')"><span class="av" style="background:#d4a93f;color:#fff">N</span>Nina</button>
     </div>
   </div>
 </div>
@@ -422,7 +424,18 @@ button{font-family:var(--font-body)}
    ═══════════════════════════════════════════════════════════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwWu5V3pSTaeNMXYUNkeZngUVanvyv9ZL3p0Pj1w9ItIOSnhYnP99OiaQupD10HYy_W/exec';
 
-const TEAMLEDEN = ['Pam','Linda','Miranda','Nina','Lotte','Iedereen','Niet toegewezen'];
+// Lotte staat in TEAMLEDEN_VOLLEDIG zodat haar oude taken werken,
+// maar niet in TEAMLEDEN_FILTER zodat ze niet meer als optie verschijnt
+// in de zijbalk en ook niet als nieuwe persoon kan worden toegewezen.
+const TEAMLEDEN_FILTER = ['Pam','Linda','Miranda','Nina','Iedereen','Niet toegewezen'];
+const TEAMLEDEN = ['Pam','Linda','Miranda','Nina','Iedereen','Niet toegewezen'];
+// Persoons-kleuren (Set B — Pastel)
+const PERSOON_KLEUREN = {
+  'Pam':     '#d49493',  // roze
+  'Linda':   '#94a87a',  // salie
+  'Miranda': '#9b8cb8',  // lavendel
+  'Nina':    '#d4a93f',  // mosterd
+};
 const HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
 const DNL=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
 const MNL=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
@@ -440,7 +453,9 @@ function setMyName(name){
   currentUser = name;
   localStorage.setItem('marcom_user_name', name);
   document.getElementById('tb-username').textContent = currentUser;
-  document.getElementById('tb-avatar').textContent = currentUser.charAt(0).toUpperCase();
+  const av = document.getElementById('tb-avatar');
+  av.textContent = currentUser.charAt(0).toUpperCase();
+  av.style.background = PERSOON_KLEUREN[name] || 'var(--oker)';
   document.getElementById('tb-user-box').style.display = 'flex';
   document.getElementById('name-picker').classList.remove('show');
 }
@@ -541,15 +556,16 @@ function renderStats(){
 }
 
 function persColor(p){
+  if(PERSOON_KLEUREN[p]) return PERSOON_KLEUREN[p];
   if(p==='Iedereen') return 'var(--oker)';
   if(p==='Niet toegewezen') return 'var(--text-3)';
-  return 'var(--groen-dark)';
+  return 'var(--groen-dark)'; // fallback voor Lotte / overige
 }
 
 function renderPersFilter(){
   const c=document.getElementById('filter-pers');
   let html='<button class="filter-btn '+(fPers==='alle'?'active':'')+'" data-pers="alle"><span class="left">Iedereen</span><span class="cnt">'+taken.length+'</span></button>';
-  TEAMLEDEN.forEach(p=>{
+  TEAMLEDEN_FILTER.forEach(p=>{
     const cnt=taken.filter(t=>t.persoon===p).length;
     if(cnt===0 && p!=='Iedereen' && p!=='Niet toegewezen')return;
     html+='<button class="filter-btn '+(fPers===p?'active':'')+'" data-pers="'+p+'"><span class="left"><span class="dot" style="background:'+persColor(p)+'"></span>'+p+'</span><span class="cnt">'+cnt+'</span></button>';
@@ -563,6 +579,22 @@ function renderPersFilter(){
 function persClass(p){if(p==='Iedereen')return 'iedereen';if(p==='Niet toegewezen')return 'niet';return ''}
 function projClass(p){return p && p.toLowerCase().includes('van der zee') && !p.includes('Distrivers /') ? 'vdz' : ''}
 
+function persStyle(p){
+  // Geeft inline-style voor de naam-badge per persoon
+  const c = PERSOON_KLEUREN[p];
+  if(!c) return ''; // Iedereen / Niet toegewezen / Lotte → fallback via class
+  // lichte achtergrond + donkere tekst voor leesbaarheid
+  return `background:${hexToBg(c)};color:${c};`;
+}
+function hexToBg(hex){
+  // Maak een lichte versie van de kleur (ongeveer 18% mix met wit)
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  const mix = (c)=> Math.round(c + (255-c)*0.78);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
 function tHTML(t){
   const dlInfo = t.datum && !t.tijd ? `<span class="t-time">📅 ${formatShortDate(t.datum)}</span>` : '';
   return `
@@ -573,7 +605,7 @@ function tHTML(t){
         <div class="t-title">${esc(t.titel)}</div>
         <div class="t-meta">
           ${t.tijd?`<span class="t-time">⏱ ${t.tijd}</span>`:dlInfo}
-          <span class="t-pers ${persClass(t.persoon)}">${esc(t.persoon)}</span>
+          <span class="t-pers ${persClass(t.persoon)}" style="${persStyle(t.persoon)}">${esc(t.persoon)}</span>
           <span class="t-project ${projClass(t.project)}">${esc(t.project||'Distrivers')}</span>
         </div>
       </div>
@@ -654,9 +686,10 @@ function renderWeek(){
     if(day.length===0)html+='<div class="wd-empty">leeg</div>';
     else day.forEach(t=>{
       html+=`<div class="wd-task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
+           style="--pers-kleur:${PERSOON_KLEUREN[t.persoon]||'transparent'}"
            ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)"
            onclick="event.stopPropagation();openModal(${t.id})">
-        <div class="wd-t-title">${esc(t.titel)}</div>
+        <div class="wd-t-title" style="padding-right:14px">${esc(t.titel)}</div>
         <div class="wd-t-time" style="color:${t.tijd?'var(--oker-dark)':'var(--text-3)'}">${t.tijd?'⏱ '+t.tijd+' · ':''}${esc(t.persoon)}</div>
       </div>`;
     });
@@ -921,7 +954,9 @@ async function start(){
   } else {
     // Al een naam? Toon hem in de header
     document.getElementById('tb-username').textContent = currentUser;
-    document.getElementById('tb-avatar').textContent = currentUser.charAt(0).toUpperCase();
+    const av = document.getElementById('tb-avatar');
+    av.textContent = currentUser.charAt(0).toUpperCase();
+    av.style.background = PERSOON_KLEUREN[currentUser] || 'var(--oker)';
     document.getElementById('tb-user-box').style.display = 'flex';
   }
 
