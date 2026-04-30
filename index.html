@@ -225,6 +225,51 @@ button{font-family:var(--font-body)}
 .tb-user{cursor:pointer}
 .tb-user:hover{background:rgba(255,255,255,.25)}
 
+/* ─── ZIJMENU WEERGAVEN ─── */
+.view-menu{display:flex;flex-direction:column;gap:2px}
+.view-btn{display:flex;align-items:center;gap:9px;padding:8px 11px;border:none;background:none;border-radius:var(--r-sm);font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;text-align:left;font-family:var(--font-body);transition:all .15s;width:100%}
+.view-btn:hover{background:var(--groen-pale);color:var(--text)}
+.view-btn.active{background:var(--groen-mid);color:var(--text);font-weight:700}
+.view-btn .ico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.view-btn .cnt{margin-left:auto;font-size:11px;color:var(--text-3);font-weight:600}
+.view-btn.active .cnt{color:var(--text-2)}
+
+/* ─── TABEL VIEW ─── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.table-head-row{display:grid;grid-template-columns:1fr 110px 100px 90px 90px 40px;gap:8px;padding:11px 16px;background:var(--groen-pale);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text-2);font-weight:700;text-transform:uppercase;letter-spacing:.06em;align-items:center}
+.th{cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 0;user-select:none;transition:color .15s}
+.th:hover{color:var(--text)}
+.th.active{color:var(--oker-dark)}
+.th .arrow{font-size:10px;opacity:.7}
+.table-body{display:flex;flex-direction:column}
+.tr{display:grid;grid-template-columns:1fr 110px 100px 90px 90px 40px;gap:8px;padding:10px 16px;border-bottom:1px solid var(--groen-pale);align-items:center;font-size:13px;cursor:pointer;transition:background .15s;border-left:3px solid transparent}
+.tr:hover{background:var(--groen-pale)}
+.tr.prio-Hoog{border-left-color:var(--prio-hoog-bar)}
+.tr.prio-Midden{border-left-color:var(--prio-mid-bar)}
+.tr.prio-Laag{border-left-color:var(--prio-laag-bar)}
+.tr.klaar{opacity:.5}
+.tr.klaar .cell-titel{text-decoration:line-through}
+.cell-titel{font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell-titel.long{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cell-prio{font-size:11px;font-weight:700}
+.cell-prio.Hoog{color:var(--prio-hoog-text)}
+.cell-prio.Midden{color:var(--prio-mid-text)}
+.cell-prio.Laag{color:var(--prio-laag-text)}
+.cell-deadline{font-size:11.5px;font-weight:600;color:var(--text-2)}
+.cell-deadline.urgent{color:var(--prio-hoog-text)}
+.cell-deadline.empty{color:var(--text-3);font-style:italic;font-weight:400}
+.cell-status{font-size:10.5px;font-weight:600}
+.cell-status .check-mini{display:inline-flex;align-items:center;gap:4px;color:var(--text-3)}
+.cell-status .check-mini.klaar{color:var(--groen-darker)}
+.cell-edit{text-align:center;color:var(--text-3);transition:color .15s}
+.tr:hover .cell-edit{color:var(--oker)}
+.table-empty{padding:40px 20px;text-align:center;color:var(--text-3);font-size:13px;font-style:italic}
+
+@media (max-width:1200px){
+  .table-head-row,.tr{grid-template-columns:1fr 100px 80px 80px 40px}
+  .th-status,.cell-status{display:none}
+}
+
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:var(--groen-pale)}
 ::-webkit-scrollbar-thumb{background:var(--groen-dark);border-radius:5px;border:2px solid var(--groen-pale)}
@@ -289,6 +334,16 @@ button{font-family:var(--font-body)}
 <div class="app">
   <aside class="sidebar">
     <div class="sb-section">
+      <div class="sb-label">Weergaven</div>
+      <div class="view-menu" id="view-menu">
+        <button class="view-btn active" data-view="dag" onclick="setView('dag')"><span class="ico">📅</span>Dag</button>
+        <button class="view-btn" data-view="week" onclick="setView('week')"><span class="ico">🗓️</span>Week</button>
+        <button class="view-btn" data-view="alle" onclick="setView('alle')"><span class="ico">📋</span>Alle taken<span class="cnt" id="vc-alle">0</span></button>
+        <button class="view-btn" data-view="backlog" onclick="setView('backlog')"><span class="ico">📦</span>Backlog<span class="cnt" id="vc-backlog">0</span></button>
+      </div>
+    </div>
+
+    <div class="sb-section">
       <div class="sb-label">Overzicht</div>
       <div class="stat-grid">
         <div class="stat-card hoog"><div class="stat-num" id="s-hoog">0</div><div class="stat-lbl">Hoog</div></div>
@@ -351,6 +406,20 @@ button{font-family:var(--font-body)}
     <div id="view-week" style="display:none">
       <div class="week-wrap">
         <div class="week-grid" id="week-grid"></div>
+      </div>
+    </div>
+
+    <div id="view-alle" style="display:none">
+      <div class="table-wrap">
+        <div class="table-head-row" id="table-head-alle"></div>
+        <div class="table-body" id="table-body-alle"></div>
+      </div>
+    </div>
+
+    <div id="view-backlog" style="display:none">
+      <div class="table-wrap">
+        <div class="table-head-row" id="table-head-backlog"></div>
+        <div class="table-body" id="table-body-backlog"></div>
       </div>
     </div>
   </main>
@@ -729,26 +798,151 @@ function getISOWeek(d){
 
 function goToDayFromWeek(ds){currentDate=ds;setView('dag')}
 
+/* ─── TABEL VIEW (Alle taken / Backlog) ─── */
+let tableSort = { col: 'datum', dir: 'asc' };
+const TABLE_COLS = [
+  { key:'titel',    label:'Taak',     w:'1fr'   },
+  { key:'persoon',  label:'Persoon',  w:'110px' },
+  { key:'project',  label:'Project',  w:'100px' },
+  { key:'prio',     label:'Prio',     w:'90px'  },
+  { key:'datum',    label:'Deadline', w:'90px'  },
+  { key:'klaar',    label:'',         w:'40px'  },  // edit-icon kolom
+];
+const PRIO_RANG = { 'Hoog':0, 'Midden':1, 'Laag':2 };
+
+function setSort(col){
+  if(tableSort.col === col) tableSort.dir = tableSort.dir === 'asc' ? 'desc' : 'asc';
+  else { tableSort.col = col; tableSort.dir = 'asc'; }
+  if(view==='alle') renderAlle();
+  if(view==='backlog') renderBacklogView();
+}
+
+function sortTaken(arr){
+  const c = tableSort.col, d = tableSort.dir === 'asc' ? 1 : -1;
+  return [...arr].sort((a,b)=>{
+    // Klaar-taken altijd onderaan, ongeacht sort
+    if(a.klaar !== b.klaar) return a.klaar ? 1 : -1;
+    let av, bv;
+    if(c === 'prio'){ av = PRIO_RANG[a.prio]||9; bv = PRIO_RANG[b.prio]||9; }
+    else if(c === 'datum'){
+      // Lege datums altijd onderaan (binnen open-taken)
+      av = a.datum || '9999-99-99';
+      bv = b.datum || '9999-99-99';
+    }
+    else if(c === 'klaar'){ av = a.klaar?1:0; bv = b.klaar?1:0; }
+    else { av = String(a[c]||'').toLowerCase(); bv = String(b[c]||'').toLowerCase(); }
+    if(av < bv) return -1*d;
+    if(av > bv) return  1*d;
+    return 0;
+  });
+}
+
+function renderTableHead(containerId){
+  const arrow = (k)=> tableSort.col===k ? `<span class="arrow">${tableSort.dir==='asc'?'↑':'↓'}</span>` : '';
+  let html = '';
+  TABLE_COLS.forEach(c=>{
+    if(c.key==='klaar'){ html += '<div></div>'; return; }
+    const cls = tableSort.col===c.key ? 'th active' : 'th';
+    html += `<div class="${cls}" onclick="setSort('${c.key}')">${c.label} ${arrow(c.key)}</div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function fmtDeadline(t){
+  if(!t.datum) return '<span class="empty">geen</span>';
+  const d = pd(t.datum);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((d - today)/86400000);
+  const txt = d.getDate()+' '+MNL_SHORT[d.getMonth()];
+  if(diff < 0) return `<span class="urgent">${txt}</span>`;
+  if(diff <= 2 && !t.klaar) return `<span class="urgent">${txt}</span>`;
+  return txt;
+}
+
+function trHTML(t){
+  const persStyleAttr = persStyle(t.persoon) ? `style="${persStyle(t.persoon)}"` : '';
+  return `
+    <div class="tr prio-${t.prio} ${t.klaar?'klaar':''}" onclick="openModal(${t.id})">
+      <div class="cell-titel" title="${esc(t.titel)}">${esc(t.titel)}</div>
+      <div><span class="t-pers ${persClass(t.persoon)}" ${persStyleAttr}>${esc(t.persoon)}</span></div>
+      <div class="t-project ${projClass(t.project)}" style="font-size:10px">${esc(t.project||'Distrivers')}</div>
+      <div class="cell-prio ${t.prio}">${t.prio}</div>
+      <div class="cell-deadline">${fmtDeadline(t)}</div>
+      <div class="cell-edit" onclick="event.stopPropagation();toggleKlaar(${t.id})" title="Afvinken">${t.klaar?'✓':'○'}</div>
+    </div>`;
+}
+
+function renderAlle(){
+  document.getElementById('tb-date').textContent = `${taken.length} taken totaal`;
+  document.getElementById('main-title-extra').textContent = '';
+  document.getElementById('main-sub').textContent = 'Klik op een kolomkop om te sorteren. Klik op een rij om te bewerken.';
+  renderTableHead('table-head-alle');
+  const ft = gf();
+  const sorted = sortTaken(ft);
+  const body = document.getElementById('table-body-alle');
+  if(sorted.length===0) body.innerHTML = '<div class="table-empty">Geen taken matchen de huidige filters.</div>';
+  else body.innerHTML = sorted.map(trHTML).join('');
+}
+
+function renderBacklogView(){
+  const bl = gf().filter(t=>!t.datum);
+  document.getElementById('tb-date').textContent = `${bl.length} taken in backlog`;
+  document.getElementById('main-title-extra').textContent = '';
+  document.getElementById('main-sub').textContent = 'Taken zonder geplande datum. Klik op een rij om een deadline toe te voegen.';
+  renderTableHead('table-head-backlog');
+  const sorted = sortTaken(bl);
+  const body = document.getElementById('table-body-backlog');
+  if(sorted.length===0) body.innerHTML = '<div class="table-empty">Geen taken in backlog. Top!</div>';
+  else body.innerHTML = sorted.map(trHTML).join('');
+}
+
+/* ─── RENDER & VIEW SWITCHING ─── */
+
+function renderViewCounts(){
+  document.getElementById('vc-alle').textContent = taken.length;
+  document.getElementById('vc-backlog').textContent = taken.filter(t=>!t.datum && !t.klaar).length;
+}
+
 function render(){
   renderStats();
   renderPersFilter();
+  renderViewCounts();
   document.querySelectorAll('#filter-prio .filter-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.prio===fPrio);
     b.onclick=()=>{fPrio=b.dataset.prio;render()};
   });
-  if(view==='dag')renderDag();else renderWeek();
+  if(view==='dag') renderDag();
+  else if(view==='week') renderWeek();
+  else if(view==='alle') renderAlle();
+  else if(view==='backlog') renderBacklogView();
 }
 
 function setView(v){
   view=v;
+  // Bovenbalk-toggle
   document.getElementById('vt-dag').classList.toggle('active',v==='dag');
   document.getElementById('vt-week').classList.toggle('active',v==='week');
-  document.getElementById('view-dag').style.display=v==='dag'?'block':'none';
-  document.getElementById('view-week').style.display=v==='week'?'block':'none';
+  // Zijmenu-knoppen
+  document.querySelectorAll('#view-menu .view-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===v);
+  });
+  // Containers
+  document.getElementById('view-dag').style.display      = v==='dag'     ? 'block' : 'none';
+  document.getElementById('view-week').style.display     = v==='week'    ? 'block' : 'none';
+  document.getElementById('view-alle').style.display     = v==='alle'    ? 'block' : 'none';
+  document.getElementById('view-backlog').style.display  = v==='backlog' ? 'block' : 'none';
+  // Navigatie-knoppen verbergen voor tabel-views (geen datum-navigatie zinvol)
+  const showNav = v==='dag' || v==='week';
+  document.querySelectorAll('.tb-nav .nav-btn').forEach(b=> b.style.display = showNav ? '' : 'none');
+  document.querySelector('.today-btn').style.display = showNav ? '' : 'none';
   render();
 }
 
-function navigate(dir){currentDate=addDays(currentDate,view==='dag'?dir:dir*7);render()}
+function navigate(dir){
+  if(view!=='dag' && view!=='week') return;
+  currentDate=addDays(currentDate,view==='dag'?dir:dir*7);
+  render();
+}
 function goToday(){currentDate=fmtDate(new Date());render()}
 
 /* ─── MODAL ─── */
