@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MARCOM Planning — Distrivers</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --groen-dark:#9FB5A7;--groen-mid:#D6E7DD;--groen-pale:#EBF2ED;
+  --oker:#C9A110;--oker-dark:#a58208;--oker-light:#e8c64a;--oker-pale:#fbf2d4;
+  --groen-darker:#7a9385;--groen-deep:#4f6a5b;
+  --bg:var(--groen-pale);--surface:#FFFFFF;
+  --border:var(--groen-mid);--border-strong:var(--groen-dark);
+  --text:#2a3a30;--text-2:#5e7264;--text-3:#97a89c;
+  --prio-hoog-bg:#f7e3d9;--prio-hoog-text:#a04a1e;--prio-hoog-bar:#c96a35;
+  --prio-mid-bg:var(--oker-pale);--prio-mid-text:var(--oker-dark);--prio-mid-bar:var(--oker);
+  --prio-laag-bg:var(--groen-mid);--prio-laag-text:var(--groen-deep);--prio-laag-bar:var(--groen-dark);
+  --r:10px;--r-sm:6px;
+  --shadow:0 1px 3px rgba(42,58,48,.08),0 4px 14px rgba(42,58,48,.05);
+  --shadow-lg:0 10px 40px rgba(42,58,48,.18);
+  --font-body:'Open Sans',sans-serif;--font-display:'Caveat',cursive;
+}
+
+html,body{height:100%}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);font-size:14px;font-weight:300;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font-body)}
+
+.topbar{background:var(--groen-dark);color:#fff;height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(159,181,167,.35)}
+.tb-left{display:flex;align-items:center;gap:18px}
+.tb-brand{display:flex;flex-direction:column;line-height:1.1}
+.tb-title{font-weight:700;font-size:17px;letter-spacing:.2px}
+.tb-tagline{font-family:var(--font-display);font-size:16px;color:var(--oker-light);margin-top:-2px}
+.view-toggle{display:flex;background:rgba(255,255,255,.18);border-radius:8px;padding:3px;gap:2px}
+.vt-btn{padding:6px 18px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:rgba(255,255,255,.8);background:none;transition:all .15s;font-family:var(--font-body);letter-spacing:.02em}
+.vt-btn:hover{color:#fff}
+.vt-btn.active{background:var(--oker);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tb-right{display:flex;align-items:center;gap:10px}
+.tb-user{display:flex;align-items:center;gap:8px;padding:5px 12px;background:rgba(255,255,255,.15);border-radius:7px;font-size:12px}
+.tb-user .avatar{width:22px;height:22px;border-radius:50%;background:var(--oker);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.tb-status{font-size:11px;opacity:.75;margin-right:4px}
+.tb-status.synced{color:var(--oker-light)}
+.tb-status.error{color:#fcd2c0}
+.tb-nav{display:flex;align-items:center;gap:6px}
+.tb-date-lbl{font-size:12.5px;font-weight:400;min-width:200px;text-align:center}
+.nav-btn{width:30px;height:30px;border:none;border-radius:7px;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.nav-btn:hover{background:rgba(255,255,255,.32)}
+.today-btn{padding:6px 14px;border:none;border-radius:7px;background:var(--oker);color:#fff;font-size:11.5px;font-weight:700;cursor:pointer;transition:background .15s;font-family:var(--font-body);letter-spacing:.04em;text-transform:uppercase}
+.today-btn:hover{background:var(--oker-dark)}
+
+.app{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 60px)}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;display:flex;flex-direction:column}
+.sb-section{padding:18px 18px 8px}
+.sb-section + .sb-section{border-top:1px solid var(--border)}
+.sb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-bottom:12px}
+
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{background:var(--groen-pale);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px}
+.stat-num{font-size:22px;font-weight:700;line-height:1;color:var(--text)}
+.stat-lbl{font-size:10px;font-weight:600;color:var(--text-2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em}
+.stat-card.hoog{background:var(--prio-hoog-bg);border-color:#e8b89a}
+.stat-card.hoog .stat-num{color:var(--prio-hoog-text)}
+.stat-card.mid{background:var(--prio-mid-bg);border-color:#e8d57a}
+.stat-card.mid .stat-num{color:var(--prio-mid-text)}
+.stat-card.klaar .stat-num{color:var(--groen-darker)}
+
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-btn{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border:none;background:none;border-radius:var(--r-sm);font-size:13px;font-weight:400;color:var(--text-2);cursor:pointer;text-align:left;font-family:var(--font-body);transition:all .15s}
+.filter-btn:hover{background:var(--groen-pale);color:var(--text)}
+.filter-btn.active{background:var(--groen-mid);color:var(--text);font-weight:600}
+.filter-btn .left{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.filter-btn .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.filter-btn .cnt{font-size:11px;color:var(--text-3);font-weight:600;flex-shrink:0;margin-left:8px}
+
+.sb-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--border);background:var(--groen-pale)}
+.sb-foot-text{font-size:11px;color:var(--text-3);line-height:1.4}
+.sb-foot-text strong{color:var(--text-2);display:block;font-weight:600;margin-bottom:2px}
+
+.main{padding:22px 28px 60px;overflow-x:auto}
+.main-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.main-title{font-size:26px;font-weight:700;color:var(--text);letter-spacing:-.4px;line-height:1.1}
+.main-title .accent{font-family:var(--font-display);font-weight:700;color:var(--oker);font-size:30px;margin-left:6px;line-height:1}
+.main-sub{font-size:13px;color:var(--text-2);margin-top:2px}
+
+.add-btn{background:var(--oker);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-body);letter-spacing:.02em;transition:background .15s,transform .1s;box-shadow:0 2px 6px rgba(201,161,16,.3)}
+.add-btn:hover{background:var(--oker-dark)}
+.add-btn:active{transform:translateY(1px)}
+
+.dag-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.dag-head{padding:14px 20px;background:var(--groen-pale);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:baseline}
+.dag-title{font-size:18px;font-weight:700;color:var(--text)}
+.dag-sub{font-family:var(--font-display);font-size:18px;color:var(--oker)}
+.dag-body{padding:8px 0}
+
+.timeslot{display:grid;grid-template-columns:64px 1fr;border-bottom:1px solid var(--groen-pale);min-height:44px}
+.timeslot:last-child{border-bottom:none}
+.ts-time{padding:10px 12px;font-size:11.5px;font-weight:600;color:var(--text-3);border-right:1px solid var(--groen-pale);letter-spacing:.04em}
+.ts-lane{padding:5px 14px;display:flex;flex-direction:column;gap:5px;justify-content:center}
+.ts-empty{font-size:11.5px;color:var(--text-3);padding:6px 10px;border-radius:5px;cursor:pointer;transition:all .15s;font-style:italic;border:1px dashed transparent;align-self:flex-start}
+.ts-lane:hover .ts-empty{background:var(--groen-pale);border-color:var(--border);color:var(--text-2);font-style:normal}
+
+.task{background:#fff;border:1px solid var(--border);border-left:3px solid var(--prio-mid-bar);border-radius:var(--r-sm);padding:9px 11px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;font-size:13px}
+.task:hover{box-shadow:var(--shadow);border-color:var(--border-strong);transform:translateY(-1px)}
+.task.prio-Hoog{border-left-color:var(--prio-hoog-bar);background:linear-gradient(to right,var(--prio-hoog-bg),#fff 30%)}
+.task.prio-Midden{border-left-color:var(--prio-mid-bar)}
+.task.prio-Laag{border-left-color:var(--prio-laag-bar)}
+.task.klaar{opacity:.55;background:var(--groen-pale)}
+.task.klaar .t-title{text-decoration:line-through;color:var(--text-3)}
+
+.t-check{width:18px;height:18px;border:2px solid var(--border-strong);border-radius:5px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:#fff}
+.t-check:hover{border-color:var(--oker)}
+.task.klaar .t-check{background:var(--groen-darker);border-color:var(--groen-darker);color:#fff;font-size:12px;font-weight:bold}
+.t-body{flex:1;min-width:0}
+.t-title{font-weight:600;color:var(--text);font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.t-meta{font-size:11px;color:var(--text-2);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:400}
+.t-pers{display:inline-flex;align-items:center;gap:4px;background:var(--groen-mid);padding:1px 8px;border-radius:9px;font-size:10.5px;font-weight:600;color:var(--groen-deep)}
+.t-pers.iedereen{background:var(--oker-pale);color:var(--oker-dark)}
+.t-pers.niet{background:#eee;color:var(--text-3)}
+.t-project{font-size:10px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.t-project.vdz{color:#1e4d6f}
+.t-time{font-weight:600;color:var(--oker-dark);font-size:11px}
+.t-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.task:hover .t-actions{opacity:1}
+.t-act{width:24px;height:24px;border:none;background:none;border-radius:5px;cursor:pointer;color:var(--text-3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.t-act:hover{background:var(--groen-mid);color:var(--text)}
+
+.backlog{margin-top:22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.backlog-head{padding:13px 20px;background:var(--groen-pale);border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.backlog-head:hover{background:var(--groen-mid)}
+.backlog-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.02em}
+.backlog-body{padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.backlog-empty{padding:18px;text-align:center;color:var(--text-3);font-size:13px;font-style:italic}
+
+.week-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);min-height:560px}
+.week-day{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.week-day:last-child{border-right:none}
+.week-day.today{background:linear-gradient(180deg,var(--oker-pale) 0%,#fff 80px)}
+.wd-head{padding:12px;border-bottom:1px solid var(--border);background:var(--groen-pale)}
+.week-day.today .wd-head{background:var(--oker);color:#fff;border-bottom-color:var(--oker-dark)}
+.wd-day-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2)}
+.week-day.today .wd-day-name{color:rgba(255,255,255,.85)}
+.wd-day-num{font-size:22px;font-weight:700;color:var(--text);line-height:1.1;margin-top:2px}
+.week-day.today .wd-day-num{color:#fff}
+.wd-cnt{font-size:10.5px;color:var(--text-3);margin-top:1px;font-weight:500}
+.week-day.today .wd-cnt{color:rgba(255,255,255,.8)}
+.wd-body{padding:8px;display:flex;flex-direction:column;gap:5px;flex:1;cursor:pointer;min-height:200px}
+.wd-body:hover{background:var(--groen-pale)}
+.wd-task{background:#fff;border:1px solid var(--border);border-left:3px solid var(--prio-mid-bar);border-radius:5px;padding:6px 8px;font-size:11.5px;cursor:pointer;transition:all .15s}
+.wd-task:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.wd-task.prio-Hoog{border-left-color:var(--prio-hoog-bar)}
+.wd-task.prio-Laag{border-left-color:var(--prio-laag-bar)}
+.wd-task.klaar{opacity:.5;text-decoration:line-through}
+.wd-t-title{font-weight:600;font-size:11.5px;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.wd-t-time{font-size:10px;color:var(--oker-dark);font-weight:600;margin-top:2px}
+.wd-empty{font-size:11px;color:var(--text-3);font-style:italic;text-align:center;padding:14px 4px}
+.wd-body:hover .wd-empty{color:var(--text-2)}
+
+/* ─── DRAG & DROP ─── */
+.task[draggable="true"],.wd-task[draggable="true"]{cursor:grab}
+.task[draggable="true"]:active,.wd-task[draggable="true"]:active{cursor:grabbing}
+.task.dragging,.wd-task.dragging{opacity:.4;transform:scale(.98)}
+.ts-lane.drop-target,.wd-body.drop-target,.backlog-body.drop-target{background:var(--oker-pale);outline:2px dashed var(--oker);outline-offset:-2px;border-radius:var(--r-sm)}
+.untimed-zone.drop-target{background:var(--oker-pale);outline:2px dashed var(--oker);outline-offset:-2px;border-radius:var(--r-sm)}
+.untimed-zone{padding:8px 16px;margin:6px 16px;border-radius:var(--r-sm);transition:all .15s;min-height:42px;display:flex;flex-direction:column;gap:6px}
+.untimed-label{padding:5px 10px;background:var(--groen-mid);border-radius:5px;font-size:10px;font-weight:700;color:var(--groen-deep);text-transform:uppercase;letter-spacing:.08em;display:inline-block;align-self:flex-start}
+
+.modal-bg{position:fixed;inset:0;background:rgba(42,58,48,.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:300;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:var(--r);width:100%;max-width:560px;box-shadow:var(--shadow-lg);overflow:hidden;border:1px solid var(--border);max-height:90vh;display:flex;flex-direction:column}
+.modal-head{padding:18px 22px;background:var(--groen-pale);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.modal-title{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.modal-close{width:30px;height:30px;border:none;background:none;border-radius:6px;cursor:pointer;color:var(--text-2);font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{background:var(--groen-mid);color:var(--text)}
+.modal-body{padding:22px;overflow-y:auto}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;font-weight:700;color:var(--text-2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:6px;font-size:13.5px;font-family:var(--font-body);font-weight:400;color:var(--text);background:#fff;transition:all .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--oker);box-shadow:0 0 0 3px var(--oker-pale)}
+.field textarea{resize:vertical;min-height:70px;font-family:var(--font-body)}
+.field .meta-info{font-size:10.5px;color:var(--text-3);margin-top:4px;font-style:italic}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.modal-foot{padding:14px 22px;background:var(--groen-pale);border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:10px;flex-shrink:0}
+.btn{padding:9px 18px;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;letter-spacing:.02em}
+.btn-primary{background:var(--oker);color:#fff}
+.btn-primary:hover{background:var(--oker-dark)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{background:var(--surface);color:var(--text-2);border:1px solid var(--border-strong)}
+.btn-secondary:hover{background:var(--groen-mid);color:var(--text)}
+.btn-danger{background:none;color:#a04a1e;border:1px solid #d8aa92}
+.btn-danger:hover{background:#f7e3d9}
+
+.loading-overlay{position:fixed;inset:0;background:rgba(235,242,237,.95);display:flex;align-items:center;justify-content:center;z-index:400;flex-direction:column;gap:18px}
+.loading-overlay.hidden{display:none}
+.spinner{width:42px;height:42px;border:3px solid var(--groen-mid);border-top-color:var(--oker);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--text-2);font-weight:600}
+.loading-text .small{font-weight:400;color:var(--text-3);font-size:12px;display:block;margin-top:4px}
+
+.error-banner{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--prio-hoog-bg);border:1px solid #e8b89a;color:var(--prio-hoog-text);padding:10px 18px;border-radius:8px;font-size:12.5px;box-shadow:var(--shadow);z-index:500;max-width:520px;display:none}
+.error-banner.show{display:block}
+.error-banner button{margin-left:10px;background:none;border:none;color:inherit;font-weight:700;cursor:pointer;font-size:14px}
+
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--groen-pale)}
+::-webkit-scrollbar-thumb{background:var(--groen-dark);border-radius:5px;border:2px solid var(--groen-pale)}
+::-webkit-scrollbar-thumb:hover{background:var(--groen-darker)}
+
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .week-grid{grid-template-columns:1fr;min-height:0}
+  .week-day{border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Planning laden... <span class="small">verbinden met Google Sheet</span></div>
+</div>
+
+<div class="error-banner" id="error-banner"></div>
+
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-brand">
+      <div class="tb-title">MARCOM Planning</div>
+      <div class="tb-tagline">Je proeft de aandacht</div>
+    </div>
+    <div class="view-toggle">
+      <button class="vt-btn active" id="vt-dag" onclick="setView('dag')">Dag</button>
+      <button class="vt-btn" id="vt-week" onclick="setView('week')">Week</button>
+    </div>
+  </div>
+  <div class="tb-right">
+    <span class="tb-status synced" id="tb-status">● synced</span>
+    <div class="tb-user" id="tb-user-box" style="display:none">
+      <div class="avatar" id="tb-avatar">?</div>
+      <span id="tb-username">...</span>
+    </div>
+    <button class="today-btn" onclick="goToday()">Vandaag</button>
+    <div class="tb-nav">
+      <button class="nav-btn" onclick="navigate(-1)">‹</button>
+      <span class="tb-date-lbl" id="tb-date">—</span>
+      <button class="nav-btn" onclick="navigate(1)">›</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">Overzicht</div>
+      <div class="stat-grid">
+        <div class="stat-card hoog"><div class="stat-num" id="s-hoog">0</div><div class="stat-lbl">Hoog</div></div>
+        <div class="stat-card mid"><div class="stat-num" id="s-mid">0</div><div class="stat-lbl">Midden</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-laag">0</div><div class="stat-lbl">Laag</div></div>
+        <div class="stat-card klaar"><div class="stat-num" id="s-klaar">0</div><div class="stat-lbl">Klaar</div></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Prioriteit</div>
+      <div class="filter-group" id="filter-prio">
+        <button class="filter-btn active" data-prio="alle"><span class="left">Alle taken</span><span class="cnt" id="c-alle">0</span></button>
+        <button class="filter-btn" data-prio="Hoog"><span class="left"><span class="dot" style="background:var(--prio-hoog-bar)"></span>Hoog</span><span class="cnt" id="c-hoog">0</span></button>
+        <button class="filter-btn" data-prio="Midden"><span class="left"><span class="dot" style="background:var(--prio-mid-bar)"></span>Midden</span><span class="cnt" id="c-mid">0</span></button>
+        <button class="filter-btn" data-prio="Laag"><span class="left"><span class="dot" style="background:var(--prio-laag-bar)"></span>Laag</span><span class="cnt" id="c-laag">0</span></button>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Teamleden</div>
+      <div class="filter-group" id="filter-pers"></div>
+    </div>
+
+    <div class="sb-foot">
+      <div class="sb-foot-text">
+        <strong>Live samenwerking</strong>
+        Wijzigingen worden automatisch gedeeld met het hele team. Auto-refresh elke 15 sec.
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-head">
+      <div>
+        <div class="main-title">Planning <span class="accent" id="main-title-extra">deze week</span></div>
+        <div class="main-sub" id="main-sub">Klik op een tijdslot om snel een taak in te plannen.</div>
+      </div>
+      <button class="add-btn" onclick="openModal()">+ Nieuwe taak</button>
+    </div>
+
+    <div id="view-dag">
+      <div class="dag-wrap">
+        <div class="dag-head">
+          <div class="dag-title" id="dag-title">—</div>
+          <div class="dag-sub" id="dag-sub"></div>
+        </div>
+        <div class="dag-body" id="dag-body"></div>
+      </div>
+
+      <div class="backlog">
+        <div class="backlog-head" onclick="toggleBacklog()">
+          <div class="backlog-title" id="bl-lbl">▼ Backlog — nog niet ingepland (0)</div>
+          <span style="font-size:11px;color:var(--text-3);font-weight:500">klik om te tonen/verbergen</span>
+        </div>
+        <div class="backlog-body" id="bl-body" style="display:none"></div>
+      </div>
+    </div>
+
+    <div id="view-week" style="display:none">
+      <div class="week-wrap">
+        <div class="week-grid" id="week-grid"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Nieuwe taak</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Titel</label>
+        <input type="text" id="f-titel" placeholder="bv. Magazine voorjaar — opmaak controleren">
+      </div>
+      <div class="field">
+        <label>Omschrijving / opmerkingen</label>
+        <textarea id="f-omschr" placeholder="Optionele toelichting of subtaken..."></textarea>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Project</label>
+          <select id="f-project">
+            <option>Distrivers</option>
+            <option>Van der Zee</option>
+            <option>Distrivers / Van der Zee</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prioriteit</label>
+          <select id="f-prio">
+            <option>Hoog</option><option selected>Midden</option><option>Laag</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Verantwoordelijke</label>
+          <select id="f-pers"></select>
+        </div>
+        <div class="field">
+          <label>Tijdslot</label>
+          <select id="f-tijd">
+            <option value="">Hele dag</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Deadline</label>
+        <input type="date" id="f-datum">
+      </div>
+      <div class="field" id="meta-box" style="display:none">
+        <div class="meta-info" id="meta-text"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="btn-del" style="display:none" onclick="delTask()">Verwijderen</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-secondary" onclick="closeModal()">Annuleren</button>
+        <button class="btn btn-primary" id="btn-save" onclick="saveTask()">Opslaan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIGURATIE — DIT IS HET ENIGE DAT JE MOET AANPASSEN
+   ───────────────────────────────────────────────────────────────────
+   Plak hieronder de Web-app URL die je krijgt als je de Apps Script
+   publiceert (zie Setup_instructies.txt, stap 11).
+   De URL ziet eruit zoals:
+   https://script.google.com/a/macros/distrivers.nl/s/AKfyc.../exec
+   ═══════════════════════════════════════════════════════════════════ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwWu5V3pSTaeNMXYUNkeZngUVanvyv9ZL3p0Pj1w9ItIOSnhYnP99OiaQupD10HYy_W/exec';
+
+const TEAMLEDEN = ['Pam','Linda','Miranda','Lotte','Iedereen','Niet toegewezen'];
+const HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const DNL=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+const MNL=['januari','februari','maart','april','mei','juni','juli','augustus','september','oktober','november','december'];
+const MNL_SHORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+
+let taken=[];
+let view='dag';
+let currentDate=fmtDate(new Date());
+let fPrio='alle', fPers='alle';
+let blOpen=true;
+let editingId=null;
+let currentUser='Onbekend';
+let refreshTimer=null;
+
+/* ─── HELPERS ─── */
+function fmtDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function pd(s){const [y,m,dd]=s.split('-').map(Number);return new Date(y,m-1,dd)}
+function isToday(s){return s===fmtDate(new Date())}
+function addDays(s,n){const d=pd(s);d.setDate(d.getDate()+n);return fmtDate(d)}
+function startOfWeek(s){const d=pd(s);const dow=(d.getDay()+6)%7;d.setDate(d.getDate()-dow);return fmtDate(d)}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c])}
+function formatShortDate(s){const d=pd(s);return d.getDate()+' '+MNL_SHORT[d.getMonth()]}
+
+/* ─── API CALLS ─── */
+function setStatus(state, msg){
+  const el = document.getElementById('tb-status');
+  el.classList.remove('synced','error');
+  if(state==='syncing'){el.textContent='● syncing...';}
+  else if(state==='synced'){el.classList.add('synced');el.textContent='● live';}
+  else if(state==='error'){el.classList.add('error');el.textContent='● '+(msg||'fout');}
+}
+
+function showError(msg){
+  const eb = document.getElementById('error-banner');
+  eb.innerHTML = esc(msg) + ' <button onclick="document.getElementById(\'error-banner\').classList.remove(\'show\')">✕</button>';
+  eb.classList.add('show');
+  setTimeout(()=>eb.classList.remove('show'), 8000);
+}
+
+async function apiGet(action){
+  const res = await fetch(API_URL+'?action='+encodeURIComponent(action), {method:'GET'});
+  if(!res.ok) throw new Error('Netwerkfout '+res.status);
+  return res.json();
+}
+
+async function apiPost(action, payload){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action, ...payload})
+  });
+  if(!res.ok) throw new Error('Netwerkfout '+res.status);
+  return res.json();
+}
+
+async function loadTaken(showSpinner=false){
+  if(showSpinner) document.getElementById('loading').classList.remove('hidden');
+  setStatus('syncing');
+  try {
+    const r = await apiGet('list');
+    if(!r.ok) throw new Error(r.error || 'Onbekende fout');
+    taken = r.taken;
+    if(r.user) {
+      currentUser = r.user;
+      document.getElementById('tb-username').textContent = currentUser;
+      document.getElementById('tb-avatar').textContent = currentUser.charAt(0).toUpperCase();
+      document.getElementById('tb-user-box').style.display = 'flex';
+    }
+    setStatus('synced');
+    render();
+  } catch(e) {
+    setStatus('error');
+    showError('Kan niet laden: ' + e.message + '. Controleer de API_URL.');
+    console.error(e);
+  } finally {
+    document.getElementById('loading').classList.add('hidden');
+  }
+}
+
+function startAutoRefresh(){
+  if(refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(()=>{
+    if(!document.getElementById('modal-bg').classList.contains('show')) loadTaken(false);
+  }, 15000);
+}
+
+/* ─── FILTER ─── */
+function gf(){
+  return taken.filter(t=>{
+    if(fPrio!=='alle'&&t.prio!==fPrio)return false;
+    if(fPers!=='alle'&&t.persoon!==fPers)return false;
+    return true;
+  });
+}
+
+/* ─── RENDER ─── */
+function renderStats(){
+  const open=taken.filter(t=>!t.klaar);
+  document.getElementById('s-hoog').textContent=open.filter(t=>t.prio==='Hoog').length;
+  document.getElementById('s-mid').textContent=open.filter(t=>t.prio==='Midden').length;
+  document.getElementById('s-laag').textContent=open.filter(t=>t.prio==='Laag').length;
+  document.getElementById('s-klaar').textContent=taken.filter(t=>t.klaar).length;
+  document.getElementById('c-alle').textContent=taken.length;
+  document.getElementById('c-hoog').textContent=taken.filter(t=>t.prio==='Hoog').length;
+  document.getElementById('c-mid').textContent=taken.filter(t=>t.prio==='Midden').length;
+  document.getElementById('c-laag').textContent=taken.filter(t=>t.prio==='Laag').length;
+}
+
+function persColor(p){
+  if(p==='Iedereen') return 'var(--oker)';
+  if(p==='Niet toegewezen') return 'var(--text-3)';
+  return 'var(--groen-dark)';
+}
+
+function renderPersFilter(){
+  const c=document.getElementById('filter-pers');
+  let html='<button class="filter-btn '+(fPers==='alle'?'active':'')+'" data-pers="alle"><span class="left">Iedereen</span><span class="cnt">'+taken.length+'</span></button>';
+  TEAMLEDEN.forEach(p=>{
+    const cnt=taken.filter(t=>t.persoon===p).length;
+    if(cnt===0 && p!=='Iedereen' && p!=='Niet toegewezen')return;
+    html+='<button class="filter-btn '+(fPers===p?'active':'')+'" data-pers="'+p+'"><span class="left"><span class="dot" style="background:'+persColor(p)+'"></span>'+p+'</span><span class="cnt">'+cnt+'</span></button>';
+  });
+  c.innerHTML=html;
+  c.querySelectorAll('.filter-btn').forEach(b=>{
+    b.onclick=()=>{fPers=b.dataset.pers;render()};
+  });
+}
+
+function persClass(p){if(p==='Iedereen')return 'iedereen';if(p==='Niet toegewezen')return 'niet';return ''}
+function projClass(p){return p && p.toLowerCase().includes('van der zee') && !p.includes('Distrivers /') ? 'vdz' : ''}
+
+function tHTML(t){
+  const dlInfo = t.datum && !t.tijd ? `<span class="t-time">📅 ${formatShortDate(t.datum)}</span>` : '';
+  return `
+    <div class="task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
+         ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)">
+      <div class="t-check" onclick="event.stopPropagation();toggleKlaar(${t.id})">${t.klaar?'✓':''}</div>
+      <div class="t-body" onclick="openModal(${t.id})">
+        <div class="t-title">${esc(t.titel)}</div>
+        <div class="t-meta">
+          ${t.tijd?`<span class="t-time">⏱ ${t.tijd}</span>`:dlInfo}
+          <span class="t-pers ${persClass(t.persoon)}">${esc(t.persoon)}</span>
+          <span class="t-project ${projClass(t.project)}">${esc(t.project||'Distrivers')}</span>
+        </div>
+      </div>
+      <div class="t-actions">
+        <button class="t-act" onclick="event.stopPropagation();openModal(${t.id})" title="Bewerken">✎</button>
+      </div>
+    </div>`;
+}
+
+function renderDag(){
+  const d=pd(currentDate);
+  document.getElementById('dag-title').textContent=DNL[d.getDay()].charAt(0).toUpperCase()+DNL[d.getDay()].slice(1)+' '+d.getDate()+' '+MNL[d.getMonth()]+' '+d.getFullYear();
+  document.getElementById('dag-sub').textContent=isToday(currentDate)?'vandaag':'';
+  document.getElementById('tb-date').textContent=DNL[d.getDay()].charAt(0).toUpperCase()+DNL[d.getDay()].slice(1)+' '+d.getDate()+' '+MNL_SHORT[d.getMonth()]+' '+d.getFullYear();
+  document.getElementById('main-title-extra').textContent=isToday(currentDate)?'vandaag':'';
+  document.getElementById('main-sub').textContent='Klik op een tijdslot om snel een taak in te plannen.';
+
+  const ft=gf(), day=ft.filter(t=>t.datum===currentDate);
+  let html='';
+  const untimed=day.filter(t=>!t.tijd);
+  // "Hele dag" drop zone — altijd zichtbaar zodat je items hier naartoe kunt slepen
+  html+=`<div class="untimed-zone" data-target="untimed" data-date="${currentDate}"
+              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToUntimed(event,'${currentDate}')">`;
+  html+='<div class="untimed-label">Deadline / hele dag</div>';
+  if(untimed.length){
+    untimed.forEach(t=>{html+=tHTML(t)});
+  } else {
+    html+='<div style="font-size:11px;color:var(--text-3);font-style:italic;padding:4px 4px">— sleep hier voor hele-dag-taken —</div>';
+  }
+  html+='</div>';
+  HOURS.forEach(h=>{
+    const tasks=day.filter(t=>t.tijd===h);
+    html+=`<div class="timeslot"><div class="ts-time">${h}</div><div class="ts-lane" data-target="slot" data-date="${currentDate}" data-time="${h}"
+              ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToSlot(event,'${currentDate}','${h}')">`;
+    if(tasks.length)tasks.forEach(t=>{html+=tHTML(t)});
+    else html+=`<div class="ts-empty" onclick="quickAdd('${currentDate}','${h}')">+ Inplannen</div>`;
+    html+='</div></div>';
+  });
+  document.getElementById('dag-body').innerHTML=html;
+
+  const bl=ft.filter(t=>!t.datum&&!t.klaar);
+  document.getElementById('bl-lbl').textContent=(blOpen?'▲':'▼')+' Backlog — nog niet ingepland ('+bl.length+')';
+  const bb=document.getElementById('bl-body');
+  bb.style.display=blOpen?'flex':'none';
+  bb.setAttribute('ondragover','onDragOver(event)');
+  bb.setAttribute('ondragleave','onDragLeave(event)');
+  bb.setAttribute('ondrop','onDropToBacklog(event)');
+  if(blOpen){
+    if(bl.length===0)bb.innerHTML='<div class="backlog-empty">Geen taken in backlog. Sleep hier een taak naartoe om hem uit de planning te halen.</div>';
+    else bb.innerHTML=bl.map(tHTML).join('');
+  }
+}
+
+function toggleBacklog(){blOpen=!blOpen;renderDag()}
+
+function renderWeek(){
+  const start=startOfWeek(currentDate);
+  const sd=pd(start),ed=pd(addDays(start,6));
+  document.getElementById('tb-date').textContent='Week '+getISOWeek(sd)+' — '+sd.getDate()+' '+MNL_SHORT[sd.getMonth()]+' t/m '+ed.getDate()+' '+MNL_SHORT[ed.getMonth()]+' '+ed.getFullYear();
+  document.getElementById('main-title-extra').textContent='week '+getISOWeek(sd);
+  document.getElementById('main-sub').textContent='Klik op een dag om hem in detail te zien. Dubbelklik om een taak toe te voegen.';
+  const today=fmtDate(new Date());
+  const ft=gf();
+  let html='';
+  for(let i=0;i<7;i++){
+    const ds=addDays(start,i),d=pd(ds);
+    const day=ft.filter(t=>t.datum===ds).sort((a,b)=>(a.tijd||'99').localeCompare(b.tijd||'99'));
+    const isT=ds===today;
+    html+=`<div class="week-day ${isT?'today':''}">
+      <div class="wd-head">
+        <div class="wd-day-name">${DNL[d.getDay()]}</div>
+        <div class="wd-day-num">${d.getDate()}</div>
+        <div class="wd-cnt">${day.filter(t=>!t.klaar).length} taak${day.filter(t=>!t.klaar).length===1?'':'en'}</div>
+      </div>
+      <div class="wd-body" data-date="${ds}"
+           ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToWeekDay(event,'${ds}')"
+           ondblclick="quickAdd('${ds}','')" onclick="goToDayFromWeek('${ds}')">`;
+    if(day.length===0)html+='<div class="wd-empty">leeg</div>';
+    else day.forEach(t=>{
+      html+=`<div class="wd-task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
+           ondragstart="onDragStart(event,${t.id})" ondragend="onDragEnd(event)"
+           onclick="event.stopPropagation();openModal(${t.id})">
+        <div class="wd-t-title">${esc(t.titel)}</div>
+        <div class="wd-t-time" style="color:${t.tijd?'var(--oker-dark)':'var(--text-3)'}">${t.tijd?'⏱ '+t.tijd+' · ':''}${esc(t.persoon)}</div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  }
+  document.getElementById('week-grid').innerHTML=html;
+}
+
+function getISOWeek(d){
+  const t=new Date(d.valueOf());
+  const dn=(d.getDay()+6)%7;
+  t.setDate(t.getDate()-dn+3);
+  const fT=t.valueOf();
+  t.setMonth(0,1);
+  if(t.getDay()!==4)t.setMonth(0,1+((4-t.getDay())+7)%7);
+  return 1+Math.ceil((fT-t)/604800000);
+}
+
+function goToDayFromWeek(ds){currentDate=ds;setView('dag')}
+
+function render(){
+  renderStats();
+  renderPersFilter();
+  document.querySelectorAll('#filter-prio .filter-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.prio===fPrio);
+    b.onclick=()=>{fPrio=b.dataset.prio;render()};
+  });
+  if(view==='dag')renderDag();else renderWeek();
+}
+
+function setView(v){
+  view=v;
+  document.getElementById('vt-dag').classList.toggle('active',v==='dag');
+  document.getElementById('vt-week').classList.toggle('active',v==='week');
+  document.getElementById('view-dag').style.display=v==='dag'?'block':'none';
+  document.getElementById('view-week').style.display=v==='week'?'block':'none';
+  render();
+}
+
+function navigate(dir){currentDate=addDays(currentDate,view==='dag'?dir:dir*7);render()}
+function goToday(){currentDate=fmtDate(new Date());render()}
+
+/* ─── MODAL ─── */
+function openModal(id,prefDate,prefTime){
+  editingId=id||null;
+  document.getElementById('modal-title').textContent=id?'Taak bewerken':'Nieuwe taak';
+  document.getElementById('btn-del').style.display=id?'block':'none';
+
+  const ps=document.getElementById('f-pers');
+  ps.innerHTML=TEAMLEDEN.map(p=>`<option>${p}</option>`).join('');
+
+  const ts=document.getElementById('f-tijd');
+  ts.innerHTML='<option value="">Hele dag</option>'+HOURS.map(h=>`<option>${h}</option>`).join('');
+
+  const metaBox = document.getElementById('meta-box');
+  const metaText = document.getElementById('meta-text');
+
+  if(id){
+    const t=taken.find(x=>String(x.id)===String(id));
+    if(!t){alert('Taak niet gevonden, mogelijk net verwijderd.');return}
+    document.getElementById('f-titel').value=t.titel;
+    document.getElementById('f-omschr').value=t.omschr||'';
+    document.getElementById('f-project').value=t.project||'Distrivers';
+    document.getElementById('f-prio').value=t.prio;
+    document.getElementById('f-pers').value=t.persoon;
+    document.getElementById('f-datum').value=t.datum||'';
+    document.getElementById('f-tijd').value=t.tijd||'';
+    if(t.laatst_gewijzigd_door){
+      let when = '';
+      if(t.laatst_gewijzigd_op){
+        try{ const d=new Date(t.laatst_gewijzigd_op); when=' op '+d.getDate()+' '+MNL_SHORT[d.getMonth()]+' om '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }catch(e){}
+      }
+      metaText.textContent='Laatst gewijzigd door '+t.laatst_gewijzigd_door+when;
+      metaBox.style.display='block';
+    } else metaBox.style.display='none';
+  }else{
+    document.getElementById('f-titel').value='';
+    document.getElementById('f-omschr').value='';
+    document.getElementById('f-project').value='Distrivers';
+    document.getElementById('f-prio').value='Midden';
+    document.getElementById('f-pers').value=TEAMLEDEN[0];
+    document.getElementById('f-datum').value=prefDate||currentDate;
+    document.getElementById('f-tijd').value=prefTime||'';
+    metaBox.style.display='none';
+  }
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(()=>document.getElementById('f-titel').focus(),50);
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('show');editingId=null}
+
+async function saveTask(){
+  const titel=document.getElementById('f-titel').value.trim();
+  if(!titel){alert('Geef de taak een titel.');return}
+  const data={
+    titel,
+    omschr:document.getElementById('f-omschr').value.trim(),
+    project:document.getElementById('f-project').value,
+    prio:document.getElementById('f-prio').value,
+    persoon:document.getElementById('f-pers').value,
+    datum:document.getElementById('f-datum').value||'',
+    tijd:document.getElementById('f-tijd').value||'',
+  };
+  const btn = document.getElementById('btn-save');
+  btn.disabled=true; btn.textContent='Opslaan...';
+  try{
+    if(editingId){
+      data.id=editingId;
+      const r = await apiPost('update', {taak:data});
+      if(!r.ok) throw new Error(r.error);
+    }else{
+      const r = await apiPost('create', {taak:data});
+      if(!r.ok) throw new Error(r.error);
+    }
+    closeModal();
+    await loadTaken();
+  } catch(e){
+    showError('Opslaan mislukt: '+e.message);
+  } finally {
+    btn.disabled=false; btn.textContent='Opslaan';
+  }
+}
+
+async function delTask(){
+  if(!editingId)return;
+  if(!confirm('Deze taak verwijderen?'))return;
+  try{
+    const r = await apiPost('delete', {id:editingId});
+    if(!r.ok) throw new Error(r.error);
+    closeModal();
+    await loadTaken();
+  } catch(e){
+    showError('Verwijderen mislukt: '+e.message);
+  }
+}
+
+async function toggleKlaar(id){
+  // Optimistic update
+  const t=taken.find(x=>String(x.id)===String(id));
+  if(t){t.klaar=!t.klaar;render()}
+  try{
+    const r = await apiPost('toggle', {id});
+    if(!r.ok) throw new Error(r.error);
+    await loadTaken();
+  } catch(e){
+    showError('Afvinken mislukt: '+e.message);
+    if(t){t.klaar=!t.klaar;render()} // revert
+  }
+}
+
+function quickAdd(d,t){openModal(null,d,t)}
+
+/* ─── DRAG & DROP ─── */
+let draggingId = null;
+
+function onDragStart(e, id){
+  draggingId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', String(id));
+  // Defer so the drag-image is still the full element
+  setTimeout(()=> e.target.classList.add('dragging'), 0);
+}
+
+function onDragEnd(e){
+  draggingId = null;
+  document.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
+}
+
+function onDragOver(e){
+  if(draggingId === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // Find the closest drop zone container and highlight it
+  const target = e.currentTarget;
+  if(target && !target.classList.contains('drop-target')){
+    document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
+    target.classList.add('drop-target');
+  }
+}
+
+function onDragLeave(e){
+  // Only remove highlight if we're really leaving (not entering a child)
+  const target = e.currentTarget;
+  if(target && !target.contains(e.relatedTarget)) target.classList.remove('drop-target');
+}
+
+async function onDropToSlot(e, datum, tijd){
+  e.preventDefault(); e.stopPropagation();
+  const id = draggingId; if(id === null) return;
+  await moveTask(id, {datum, tijd});
+}
+
+async function onDropToUntimed(e, datum){
+  e.preventDefault(); e.stopPropagation();
+  const id = draggingId; if(id === null) return;
+  await moveTask(id, {datum, tijd:''});
+}
+
+async function onDropToWeekDay(e, datum){
+  e.preventDefault(); e.stopPropagation();
+  const id = draggingId; if(id === null) return;
+  // Bij week-view geen tijdslot specificeren — taak komt op de dag, blijft op zijn bestaande tijd als die er was
+  // Maar als hij naar een andere dag gaat, willen we dat hij verschijnt — dus laat tijd staan zoals het was
+  const t = taken.find(x=>String(x.id)===String(id));
+  await moveTask(id, {datum, tijd: t ? (t.tijd||'') : ''});
+}
+
+async function onDropToBacklog(e){
+  e.preventDefault(); e.stopPropagation();
+  const id = draggingId; if(id === null) return;
+  await moveTask(id, {datum:'', tijd:''});
+}
+
+async function moveTask(id, changes){
+  const t = taken.find(x=>String(x.id)===String(id));
+  if(!t) return;
+  // Geen wijziging? skip.
+  if(t.datum === changes.datum && t.tijd === changes.tijd) return;
+  // Optimistisch updaten
+  const oldDatum = t.datum, oldTijd = t.tijd;
+  t.datum = changes.datum;
+  t.tijd = changes.tijd;
+  render();
+  setStatus('syncing');
+  try{
+    const updated = {...t};
+    const r = await apiPost('update', {taak: updated});
+    if(!r.ok) throw new Error(r.error);
+    setStatus('synced');
+    // Server-versie ophalen om laatst_gewijzigd_door bij te werken
+    await loadTaken();
+  } catch(err){
+    // Rollback
+    t.datum = oldDatum; t.tijd = oldTijd;
+    render();
+    setStatus('error');
+    showError('Verplaatsen mislukt: '+err.message);
+  }
+}
+
+document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target.id==='modal-bg')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+/* ─── START ─── */
+async function start(){
+  if(API_URL.includes('PLAK-HIER')){
+    document.getElementById('loading').classList.add('hidden');
+    showError('De API_URL is nog niet ingesteld. Open dit bestand in een editor en plak de Web-app URL bovenaan het script.');
+    return;
+  }
+  await loadTaken(true);
+  // Open op vandaag of dichtstbijzijnde datum met taken
+  const today = fmtDate(new Date());
+  const datumsMetTaken = [...new Set(taken.filter(t=>t.datum).map(t=>t.datum))].sort();
+  const eersteToekomst = datumsMetTaken.find(d=>d>=today);
+  if(eersteToekomst) currentDate = eersteToekomst;
+  render();
+  startAutoRefresh();
+}
+start();
+</script>
+</body>
+</html>
