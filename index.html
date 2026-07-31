@@ -166,6 +166,17 @@ button{font-family:var(--font-body)}
 .vrij-add-btn{width:100%;justify-content:center;margin-top:6px;font-size:12px;padding:8px;background:var(--groen-mid);color:var(--groen-deep);border:none;border-radius:7px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .15s}
 .vrij-add-btn:hover{background:var(--groen-dark);color:#fff}
 
+/* ─── VRIJE DAG: TYPE-KEUZE & WEEKDAGEN ─── */
+.type-toggle{display:flex;gap:6px}
+.type-btn{flex:1;padding:9px 8px;border:1px solid var(--border-strong);background:#fff;border-radius:7px;font-size:12px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:var(--font-body);transition:all .15s}
+.type-btn.active{background:var(--oker);border-color:var(--oker);color:#fff}
+.type-btn:hover:not(.active){background:var(--groen-pale)}
+.weekday-picker{display:flex;gap:6px;flex-wrap:wrap}
+.weekday-picker label{display:flex;align-items:center;gap:5px;padding:7px 11px;border:1px solid var(--border-strong);border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text-2)}
+.weekday-picker label:has(input:checked){background:var(--oker-pale);border-color:var(--oker);color:var(--oker-dark)}
+.weekday-picker label.checked{background:var(--oker-pale);border-color:var(--oker);color:var(--oker-dark)}
+.weekday-picker input{margin:0}
+
 /* ─── MODAL WAARSCHUWING ─── */
 .field-warning{background:var(--prio-hoog-bg);color:var(--prio-hoog-text);border:1px solid #e8b89a;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:600;margin-bottom:14px;display:none}
 .field-warning.show{display:block}
@@ -625,13 +636,30 @@ button{font-family:var(--font-body)}
         <label>Voor wie</label>
         <select id="v-pers"></select>
       </div>
+      <div class="field">
+        <label>Type</label>
+        <div class="type-toggle">
+          <button type="button" class="type-btn active" id="v-type-eenmalig" onclick="setVrijType('eenmalig')">Eenmalige periode</button>
+          <button type="button" class="type-btn" id="v-type-wekelijks" onclick="setVrijType('wekelijks')">Wekelijks terugkerend</button>
+        </div>
+      </div>
+      <div class="field" id="v-weekdagen-field" style="display:none">
+        <label>Vaste dag(en)</label>
+        <div class="weekday-picker">
+          <label><input type="checkbox" value="1" class="v-weekdag" onchange="this.closest('label').classList.toggle('checked',this.checked)"> Ma</label>
+          <label><input type="checkbox" value="2" class="v-weekdag" onchange="this.closest('label').classList.toggle('checked',this.checked)"> Di</label>
+          <label><input type="checkbox" value="3" class="v-weekdag" onchange="this.closest('label').classList.toggle('checked',this.checked)"> Wo</label>
+          <label><input type="checkbox" value="4" class="v-weekdag" onchange="this.closest('label').classList.toggle('checked',this.checked)"> Do</label>
+          <label><input type="checkbox" value="5" class="v-weekdag" onchange="this.closest('label').classList.toggle('checked',this.checked)"> Vr</label>
+        </div>
+      </div>
       <div class="row2">
         <div class="field">
-          <label>Van</label>
+          <label id="v-start-label">Van</label>
           <input type="date" id="v-start">
         </div>
         <div class="field">
-          <label>Tot en met</label>
+          <label id="v-eind-label">Tot en met</label>
           <input type="date" id="v-eind">
         </div>
       </div>
@@ -928,8 +956,37 @@ function persBadgesHTML(t, wrapClass){
 }
 
 /* ─── VRIJE DAGEN ─── */
+const WEEKDAG_NAMEN = {1:'ma',2:'di',3:'wo',4:'do',5:'vr'};
+// Bepaalt of een vrije-dag-regel geldt op een specifieke datum ds.
+// Oude/eenmalige regels: gewoon een van-tot-met periode.
+// Wekelijkse regels: geldt op de gekozen weekdag(en), vanaf startdatum,
+// en tot einddatum als die is ingevuld (leeg = voor onbepaalde tijd).
+function vrijMatch(v, ds){
+  if(v.type==='wekelijks'){
+    if(ds < v.startdatum) return false;
+    if(v.einddatum && ds > v.einddatum) return false;
+    const jsDag = pd(ds).getDay(); // 0=zo..6=za
+    const isoDag = jsDag===0 ? 7 : jsDag; // 1=ma..7=zo
+    const dagen = String(v.weekdagen||'').split(',').filter(Boolean).map(Number);
+    return dagen.includes(isoDag);
+  }
+  return ds>=v.startdatum && ds<=v.einddatum;
+}
 function wieVrijOp(ds){
-  return [...new Set(vrijeDagen.filter(v=>ds>=v.startdatum && ds<=v.einddatum).map(v=>v.persoon))];
+  return [...new Set(vrijeDagen.filter(v=>vrijMatch(v,ds)).map(v=>v.persoon))];
+}
+// Loopt (indien nodig) dag voor dag door een periode om te checken of een
+// persoon ergens in die periode vrij is — nodig omdat wekelijkse vrije
+// dagen niet als simpele van-tot-met-vergelijking te checken zijn.
+function heeftVrijConflict(persoon, startD, eindD){
+  let ds = startD;
+  let veiligheidsteller = 0;
+  while(ds <= eindD && veiligheidsteller < 400){
+    if(vrijeDagen.some(v=>v.persoon===persoon && vrijMatch(v,ds))) return true;
+    ds = addDays(ds,1);
+    veiligheidsteller++;
+  }
+  return false;
 }
 function checkVrijWaarschuwing(){
   const el = document.getElementById('vrij-waarschuwing');
@@ -941,8 +998,7 @@ function checkVrijWaarschuwing(){
   if(!eind){ el.classList.remove('show'); return; }
   const conflicten = [];
   [p1,p2].filter(Boolean).forEach(p=>{
-    const conflict = vrijeDagen.some(v=>v.persoon===p && !(eind<v.startdatum || start>v.einddatum));
-    if(conflict && conflicten.indexOf(p)===-1) conflicten.push(p);
+    if(heeftVrijConflict(p, start, eind) && conflicten.indexOf(p)===-1) conflicten.push(p);
   });
   if(conflicten.length){
     el.textContent = `⚠️ Let op: ${conflicten.join(' en ')} ${conflicten.length===1?'is':'zijn'} in deze periode vrij/op vakantie.`;
@@ -958,16 +1014,26 @@ function renderVrijBanner(containerId, personen){
   el.style.display='flex';
   el.innerHTML = personen.map(p=>`<span class="vrij-chip" style="${persStyle(p)}">🌴 ${esc(p)} is er niet</span>`).join('');
 }
+function vrijBeschrijving(v){
+  if(v.type==='wekelijks'){
+    const dagen = String(v.weekdagen||'').split(',').filter(Boolean).map(Number).sort().map(n=>WEEKDAG_NAMEN[n]).join('+');
+    const periode = v.einddatum ? `t/m ${formatShortDate(v.einddatum)}` : 'doorlopend';
+    return `Elke ${dagen} (vanaf ${formatShortDate(v.startdatum)}, ${periode})`;
+  }
+  return `${formatShortDate(v.startdatum)}${v.startdatum!==v.einddatum?' t/m '+formatShortDate(v.einddatum):''}`;
+}
 function renderVrijeDagenLijst(){
   const el = document.getElementById('vrij-lijst');
   if(!el) return;
   const today = fmtDate(new Date());
-  const relevant = vrijeDagen.filter(v=>v.einddatum>=today).sort((a,b)=>a.startdatum.localeCompare(b.startdatum));
+  // Toon: wekelijkse regels die nog lopen (geen einddatum, of einddatum in de toekomst) + eenmalige periodes die nog niet voorbij zijn.
+  const relevant = vrijeDagen.filter(v=> v.type==='wekelijks' ? (!v.einddatum || v.einddatum>=today) : v.einddatum>=today)
+    .sort((a,b)=>a.startdatum.localeCompare(b.startdatum));
   if(!relevant.length){ el.innerHTML='<div class="vrij-empty">Geen vrije dagen gepland.</div>'; return; }
   el.innerHTML = relevant.map(v=>`
     <div class="vrij-item">
       <span class="t-pers ${persClass(v.persoon)}" style="${persStyle(v.persoon)}">${esc(v.persoon)}</span>
-      <span class="vrij-dates">${formatShortDate(v.startdatum)}${v.startdatum!==v.einddatum?' t/m '+formatShortDate(v.einddatum):''}</span>
+      <span class="vrij-dates">${vrijBeschrijving(v)}</span>
       <button class="vrij-del" onclick="deleteVrij(${v.id})" title="Verwijderen">✕</button>
     </div>`).join('');
 }
@@ -1568,12 +1634,23 @@ async function duplicateTask(){
 }
 
 /* ─── VRIJE DAGEN MODAL ─── */
+let vrijType='eenmalig';
+function setVrijType(type){
+  vrijType=type;
+  document.getElementById('v-type-eenmalig').classList.toggle('active', type==='eenmalig');
+  document.getElementById('v-type-wekelijks').classList.toggle('active', type==='wekelijks');
+  document.getElementById('v-weekdagen-field').style.display = type==='wekelijks' ? 'block' : 'none';
+  document.getElementById('v-start-label').textContent = type==='wekelijks' ? 'Vanaf' : 'Van';
+  document.getElementById('v-eind-label').textContent = type==='wekelijks' ? 'Tot en met (optioneel)' : 'Tot en met';
+}
 function openVrijModal(){
   const ps=document.getElementById('v-pers');
   ps.innerHTML=TEAMLEDEN_FILTER.filter(p=>p!=='Iedereen'&&p!=='Niet toegewezen').map(p=>`<option>${p}</option>`).join('');
   document.getElementById('v-start').value=currentDate;
   document.getElementById('v-eind').value=currentDate;
   document.getElementById('v-omschr').value='';
+  document.querySelectorAll('.v-weekdag').forEach(cb=>{cb.checked=false; cb.closest('label').classList.remove('checked');});
+  setVrijType('eenmalig');
   document.getElementById('modal-vrij-bg').classList.add('show');
 }
 function closeVrijModal(){document.getElementById('modal-vrij-bg').classList.remove('show')}
@@ -1581,14 +1658,30 @@ function closeVrijModal(){document.getElementById('modal-vrij-bg').classList.rem
 async function saveVrij(){
   const persoon=document.getElementById('v-pers').value;
   const startdatum=document.getElementById('v-start').value;
-  const einddatum=document.getElementById('v-eind').value || startdatum;
-  if(!startdatum){alert('Kies een datum.');return}
-  if(einddatum<startdatum){alert('De einddatum ligt voor de startdatum.');return}
+  let einddatum=document.getElementById('v-eind').value;
   const omschr=document.getElementById('v-omschr').value.trim();
+  if(!startdatum){alert('Kies een datum.');return}
+
+  const vrij={persoon, type:vrijType, omschr};
+  if(vrijType==='wekelijks'){
+    const dagen=[...document.querySelectorAll('.v-weekdag:checked')].map(cb=>cb.value);
+    if(!dagen.length){alert('Kies minstens één dag van de week.');return}
+    if(einddatum && einddatum<startdatum){alert('De einddatum ligt voor de startdatum.');return}
+    vrij.weekdagen=dagen.join(',');
+    vrij.startdatum=startdatum;
+    vrij.einddatum=einddatum||''; // leeg = voor onbepaalde tijd
+  } else {
+    einddatum = einddatum || startdatum;
+    if(einddatum<startdatum){alert('De einddatum ligt voor de startdatum.');return}
+    vrij.startdatum=startdatum;
+    vrij.einddatum=einddatum;
+    vrij.weekdagen='';
+  }
+
   const btn=document.getElementById('btn-save-vrij');
   btn.disabled=true; btn.textContent='Opslaan...';
   try{
-    const r = await apiPost('create_vrij', {vrij:{persoon,startdatum,einddatum,omschr}});
+    const r = await apiPost('create_vrij', {vrij});
     if(!r.ok) throw new Error(r.error);
     closeVrijModal();
     await loadTaken();
