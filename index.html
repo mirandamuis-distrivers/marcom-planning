@@ -150,6 +150,8 @@ button{font-family:var(--font-body)}
 .wd-vrij{font-size:9.5px;color:var(--oker-dark);font-weight:700;margin-top:3px;line-height:1.3}
 .week-day.today .wd-vrij{color:#fff}
 .t-multi,.wd-multi{display:inline-block;font-size:9.5px;font-weight:700;color:var(--oker-dark);background:var(--oker-pale);padding:1px 7px;border-radius:9px;letter-spacing:.02em}
+.t-link{color:var(--text-3);text-decoration:none;font-size:12px;flex-shrink:0}
+.t-link:hover{color:var(--oker-dark)}
 
 /* ─── VRIJE DAGEN ─── */
 .vrij-banner{display:none;flex-wrap:wrap;gap:6px;margin-bottom:12px}
@@ -163,6 +165,47 @@ button{font-family:var(--font-body)}
 .vrij-empty{font-size:11.5px;color:var(--text-3);font-style:italic;padding:4px}
 .vrij-add-btn{width:100%;justify-content:center;margin-top:6px;font-size:12px;padding:8px;background:var(--groen-mid);color:var(--groen-deep);border:none;border-radius:7px;font-weight:700;cursor:pointer;font-family:var(--font-body);transition:all .15s}
 .vrij-add-btn:hover{background:var(--groen-dark);color:#fff}
+
+/* ─── MODAL WAARSCHUWING ─── */
+.field-warning{background:var(--prio-hoog-bg);color:var(--prio-hoog-text);border:1px solid #e8b89a;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:600;margin-bottom:14px;display:none}
+.field-warning.show{display:block}
+
+/* ─── WERKDRUK WIDGET ─── */
+.werkdruk-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:11.5px}
+.werkdruk-naam{width:56px;flex-shrink:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 6px;border-radius:6px}
+.werkdruk-bar-wrap{flex:1;height:8px;background:var(--groen-pale);border-radius:5px;overflow:hidden}
+.werkdruk-bar{height:100%;border-radius:5px;transition:width .3s}
+.werkdruk-cnt{width:16px;text-align:right;color:var(--text-2);font-weight:700;flex-shrink:0}
+
+/* ─── TABEL-TOOLBAR (zoeken/export/print) ─── */
+.table-toolbar{display:none;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.table-toolbar.show{display:flex}
+.search-input{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--border-strong);border-radius:7px;font-size:13px;font-family:var(--font-body);color:var(--text);background:#fff}
+.search-input:focus{outline:none;border-color:var(--oker);box-shadow:0 0 0 3px var(--oker-pale)}
+
+/* ─── MAANDWEERGAVE ─── */
+.month-head-row{display:grid;grid-template-columns:repeat(5,1fr);background:var(--groen-pale);border-bottom:1px solid var(--border)}
+.month-head-cell{padding:8px;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
+.month-grid{display:grid;grid-template-columns:repeat(5,1fr)}
+.month-day{background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-height:104px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:3px;transition:background .15s}
+.month-day:hover{background:var(--groen-pale)}
+.month-day:nth-child(5n){border-right:none}
+.month-day.other-month{background:var(--groen-pale);opacity:.5}
+.month-day.today{background:var(--oker-pale)}
+.month-daynum{font-size:12px;font-weight:700;color:var(--text)}
+.month-day.today .month-daynum{color:var(--oker-dark)}
+.month-chip{font-size:10px;padding:1px 6px;border-radius:5px;background:var(--groen-mid);color:var(--groen-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.month-chip.prio-Hoog{background:var(--prio-hoog-bg);color:var(--prio-hoog-text)}
+.month-more{font-size:10px;color:var(--text-3);font-style:italic;padding:1px 6px}
+.month-vrij{font-size:9px;color:var(--oker-dark);font-weight:700}
+
+@media print{
+  .sidebar,.topbar,.add-btn,.table-toolbar,.modal-bg,.vrij-banner,.backlog-head span,.t-actions{display:none !important}
+  .main{padding:0 !important}
+  body{background:#fff !important}
+  .app{display:block !important}
+  .table-wrap,.dag-wrap,.week-wrap{box-shadow:none !important;border:1px solid #ccc !important}
+}
 .week-day{border-right:1px solid var(--border);display:flex;flex-direction:column}
 .week-day:last-child{border-right:none}
 .week-day.today{background:linear-gradient(180deg,var(--oker-pale) 0%,#fff 80px)}
@@ -335,6 +378,7 @@ button{font-family:var(--font-body)}
     <div class="view-toggle">
       <button class="vt-btn active" id="vt-dag" onclick="setView('dag')">Dag</button>
       <button class="vt-btn" id="vt-week" onclick="setView('week')">Week</button>
+      <button class="vt-btn" id="vt-maand" onclick="setView('maand')">Maand</button>
     </div>
   </div>
   <div class="tb-right">
@@ -359,6 +403,7 @@ button{font-family:var(--font-body)}
       <div class="view-menu" id="view-menu">
         <button class="view-btn active" data-view="dag" onclick="setView('dag')"><span class="ico">📅</span>Dag</button>
         <button class="view-btn" data-view="week" onclick="setView('week')"><span class="ico">🗓️</span>Week</button>
+        <button class="view-btn" data-view="maand" onclick="setView('maand')"><span class="ico">📆</span>Maand</button>
         <button class="view-btn" data-view="alle" onclick="setView('alle')"><span class="ico">📋</span>Alle taken<span class="cnt" id="vc-alle">0</span></button>
         <button class="view-btn" data-view="backlog" onclick="setView('backlog')"><span class="ico">📦</span>Backlog<span class="cnt" id="vc-backlog">0</span></button>
         <button class="view-btn" data-view="archief" onclick="setView('archief')"><span class="ico">🗄️</span>Archief<span class="cnt" id="vc-archief">0</span></button>
@@ -391,6 +436,11 @@ button{font-family:var(--font-body)}
     </div>
 
     <div class="sb-section">
+      <div class="sb-label">Werkdruk deze week</div>
+      <div id="werkdruk-lijst"></div>
+    </div>
+
+    <div class="sb-section">
       <div class="sb-label">Vrije dagen &amp; vakanties</div>
       <div class="vrij-lijst" id="vrij-lijst"></div>
       <button class="vrij-add-btn" onclick="openVrijModal()">+ Vrije dag toevoegen</button>
@@ -411,6 +461,12 @@ button{font-family:var(--font-body)}
         <div class="main-sub" id="main-sub">Klik op een tijdslot om snel een taak in te plannen.</div>
       </div>
       <button class="add-btn" onclick="openModal()">+ Nieuwe taak</button>
+    </div>
+
+    <div class="table-toolbar" id="table-toolbar">
+      <input type="text" class="search-input" id="search-input" placeholder="Zoek op titel of omschrijving..." oninput="onSearchInput(this.value)">
+      <button class="btn btn-secondary" onclick="exportCSV()">⬇️ Exporteer CSV</button>
+      <button class="btn btn-secondary" onclick="printView()">🖨️ Print / PDF</button>
     </div>
 
     <div id="view-dag">
@@ -435,6 +491,13 @@ button{font-family:var(--font-body)}
     <div id="view-week" style="display:none">
       <div class="week-wrap">
         <div class="week-grid" id="week-grid"></div>
+      </div>
+    </div>
+
+    <div id="view-maand" style="display:none">
+      <div class="week-wrap">
+        <div class="month-head-row" id="month-head-row"></div>
+        <div class="month-grid" id="month-grid"></div>
       </div>
     </div>
 
@@ -468,6 +531,7 @@ button{font-family:var(--font-body)}
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
+      <div class="field-warning" id="vrij-waarschuwing"></div>
       <div class="field">
         <label>Titel</label>
         <input type="text" id="f-titel" placeholder="bv. Magazine voorjaar — opmaak controleren">
@@ -475,6 +539,10 @@ button{font-family:var(--font-body)}
       <div class="field">
         <label>Omschrijving / opmerkingen</label>
         <textarea id="f-omschr" placeholder="Optionele toelichting of subtaken..."></textarea>
+      </div>
+      <div class="field">
+        <label>Link / bijlage (optioneel)</label>
+        <input type="url" id="f-link" placeholder="https://... (bv. Canva-ontwerp of Drive-bestand)">
       </div>
       <div class="row2">
         <div class="field">
@@ -495,17 +563,17 @@ button{font-family:var(--font-body)}
       <div class="row2">
         <div class="field">
           <label>Verantwoordelijke</label>
-          <select id="f-pers"></select>
+          <select id="f-pers" onchange="checkVrijWaarschuwing()"></select>
         </div>
         <div class="field">
           <label>Extra persoon (optioneel)</label>
-          <select id="f-pers2"></select>
+          <select id="f-pers2" onchange="checkVrijWaarschuwing()"></select>
         </div>
       </div>
       <div class="row2">
         <div class="field">
           <label>Startdatum (optioneel)</label>
-          <input type="date" id="f-startdatum">
+          <input type="date" id="f-startdatum" onchange="checkVrijWaarschuwing()">
         </div>
         <div class="field">
           <label>Tijdslot</label>
@@ -514,10 +582,22 @@ button{font-family:var(--font-body)}
           </select>
         </div>
       </div>
+      <div class="row2">
+        <div class="field">
+          <label>Einddatum / deadline</label>
+          <input type="date" id="f-datum" onchange="checkVrijWaarschuwing()">
+        </div>
+        <div class="field">
+          <label>Herhaling</label>
+          <select id="f-herhaling">
+            <option value="">Nooit</option>
+            <option value="wekelijks">Wekelijks</option>
+            <option value="maandelijks">Maandelijks</option>
+          </select>
+        </div>
+      </div>
       <div class="field">
-        <label>Einddatum / deadline</label>
-        <input type="date" id="f-datum">
-        <div class="meta-info">Laat de startdatum leeg voor een taak van één dag. Vul beide in om een taak over meerdere dagen te laten lopen (bv. mee bezig / deadline).</div>
+        <div class="meta-info">Laat de startdatum leeg voor een taak van één dag. Vul beide in om een taak over meerdere dagen te laten lopen (bv. mee bezig / deadline). Herhaling is niet te combineren met een meerdaagse taak.</div>
       </div>
       <div class="field" id="meta-box" style="display:none">
         <div class="meta-info" id="meta-text"></div>
@@ -525,6 +605,7 @@ button{font-family:var(--font-body)}
     </div>
     <div class="modal-foot">
       <button class="btn btn-danger" id="btn-del" style="display:none" onclick="delTask()">Verwijderen</button>
+      <button class="btn btn-secondary" id="btn-dup" style="display:none" onclick="duplicateTask()">⧉ Dupliceren</button>
       <div style="display:flex;gap:8px;margin-left:auto">
         <button class="btn btn-secondary" onclick="closeModal()">Annuleren</button>
         <button class="btn btn-primary" id="btn-save" onclick="saveTask()">Opslaan</button>
@@ -603,7 +684,9 @@ let taken=[];
 let vrijeDagen=[];
 let view='dag';
 let currentDate=fmtDate(new Date());
-let fPrio='alle', fPers='alle';
+// Combineerbare filters: een leeg Set betekent "alle" (geen filter actief).
+let fPrio=new Set(), fPers=new Set();
+let searchQuery='';
 let blOpen=true;
 let editingId=null;
 let currentUser = localStorage.getItem('marcom_user_name') || '';
@@ -709,11 +792,17 @@ function startAutoRefresh(){
 /* ─── FILTER ─── */
 function gf(){
   return taken.filter(t=>{
-    if(fPrio!=='alle'&&t.prio!==fPrio)return false;
-    if(fPers!=='alle'&&t.persoon!==fPers&&t.persoon2!==fPers)return false;
+    if(fPrio.size && !fPrio.has(t.prio))return false;
+    if(fPers.size && !fPers.has(t.persoon) && !fPers.has(t.persoon2))return false;
     return true;
   });
 }
+function matchesSearch(t){
+  if(!searchQuery) return true;
+  const q=searchQuery.toLowerCase();
+  return (t.titel||'').toLowerCase().includes(q) || (t.omschr||'').toLowerCase().includes(q);
+}
+function onSearchInput(v){ searchQuery=v.trim(); render(); }
 
 /* ─── RENDER ─── */
 function renderStats(){
@@ -737,15 +826,21 @@ function persColor(p){
 
 function renderPersFilter(){
   const c=document.getElementById('filter-pers');
-  let html='<button class="filter-btn '+(fPers==='alle'?'active':'')+'" data-pers="alle"><span class="left">Iedereen</span><span class="cnt">'+taken.length+'</span></button>';
+  let html='<button class="filter-btn '+(fPers.size===0?'active':'')+'" data-pers="alle"><span class="left">Iedereen</span><span class="cnt">'+taken.length+'</span></button>';
   TEAMLEDEN_FILTER.forEach(p=>{
     const cnt=taken.filter(t=>t.persoon===p||t.persoon2===p).length;
     if(cnt===0 && p!=='Iedereen' && p!=='Niet toegewezen')return;
-    html+='<button class="filter-btn '+(fPers===p?'active':'')+'" data-pers="'+p+'"><span class="left"><span class="dot" style="background:'+persColor(p)+'"></span>'+p+'</span><span class="cnt">'+cnt+'</span></button>';
+    html+='<button class="filter-btn '+(fPers.has(p)?'active':'')+'" data-pers="'+p+'"><span class="left"><span class="dot" style="background:'+persColor(p)+'"></span>'+p+'</span><span class="cnt">'+cnt+'</span></button>';
   });
   c.innerHTML=html;
   c.querySelectorAll('.filter-btn').forEach(b=>{
-    b.onclick=()=>{fPers=b.dataset.pers;render()};
+    b.onclick=()=>{
+      const val=b.dataset.pers;
+      if(val==='alle'){ fPers.clear(); }
+      else if(fPers.has(val)){ fPers.delete(val); }
+      else { fPers.add(val); }
+      render();
+    };
   });
 }
 
@@ -791,7 +886,36 @@ function multiDayBadgeHTML(t, ds){
   const status = taskStatusLabel(t, ds);
   return `<span class="t-multi">${status} · dag ${dagNummerInRange(t,ds)}/${dagenInRange(t)}</span>`;
 }
+
+/* ─── HERHALENDE TAKEN ─── */
+// Een herhalende taak wordt niet als losse rij per keer opgeslagen, maar
+// live berekend: op basis van de oorspronkelijke datum + het
+// herhalingspatroon bepalen we op welke dagen hij weer terugkomt.
+function isRecurring(t){ return !!(t.herhaling && t.datum); }
+function matchesRecurrence(t, ds){
+  if(!isRecurring(t) || ds < t.datum) return false;
+  const verschilDagen = Math.round((pd(ds)-pd(t.datum))/86400000);
+  if(t.herhaling==='wekelijks') return verschilDagen % 7 === 0;
+  if(t.herhaling==='maandelijks') return pd(ds).getDate() === pd(t.datum).getDate();
+  return false;
+}
+// Voor herhalende taken staat "klaar" niet vast, maar hangt af van de dag:
+// hij is alleen "klaar" op de dag die als laatst_afgerond_datum is opgeslagen.
+function effectiveKlaar(t, ds){
+  if(isRecurring(t)) return !!ds && t.laatst_afgerond_datum===ds;
+  return !!t.klaar;
+}
+function recurBadgeHTML(t){
+  if(!isRecurring(t)) return '';
+  const label = t.herhaling==='wekelijks' ? 'Wekelijks' : 'Maandelijks';
+  return `<span class="t-multi">🔁 ${label}</span>`;
+}
+function linkIconHTML(t){
+  if(!t.link) return '';
+  return `<a href="${esc(t.link)}" target="_blank" rel="noopener" class="t-link" onclick="event.stopPropagation()" title="Open bijlage/link">🔗</a>`;
+}
 function taakActiefOp(t, ds){
+  if(isRecurring(t)) return matchesRecurrence(t, ds);
   if(isRangeTask(t)) return ds>=t.startdatum && ds<=t.datum;
   return t.datum===ds;
 }
@@ -806,6 +930,26 @@ function persBadgesHTML(t, wrapClass){
 /* ─── VRIJE DAGEN ─── */
 function wieVrijOp(ds){
   return [...new Set(vrijeDagen.filter(v=>ds>=v.startdatum && ds<=v.einddatum).map(v=>v.persoon))];
+}
+function checkVrijWaarschuwing(){
+  const el = document.getElementById('vrij-waarschuwing');
+  if(!el) return;
+  const p1 = document.getElementById('f-pers').value;
+  const p2 = document.getElementById('f-pers2').value;
+  const eind = document.getElementById('f-datum').value;
+  const start = document.getElementById('f-startdatum').value || eind;
+  if(!eind){ el.classList.remove('show'); return; }
+  const conflicten = [];
+  [p1,p2].filter(Boolean).forEach(p=>{
+    const conflict = vrijeDagen.some(v=>v.persoon===p && !(eind<v.startdatum || start>v.einddatum));
+    if(conflict && conflicten.indexOf(p)===-1) conflicten.push(p);
+  });
+  if(conflicten.length){
+    el.textContent = `⚠️ Let op: ${conflicten.join(' en ')} ${conflicten.length===1?'is':'zijn'} in deze periode vrij/op vakantie.`;
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
 }
 function renderVrijBanner(containerId, personen){
   const el = document.getElementById(containerId);
@@ -828,20 +972,43 @@ function renderVrijeDagenLijst(){
     </div>`).join('');
 }
 
+/* ─── WERKDRUK-OVERZICHT ─── */
+function renderWerkdruk(){
+  const el = document.getElementById('werkdruk-lijst');
+  if(!el) return;
+  const start = startOfWeek(currentDate);
+  const dagen = [0,1,2,3,4].map(i=>addDays(start,i));
+  const mensen = TEAMLEDEN_FILTER.filter(p=>p!=='Iedereen'&&p!=='Niet toegewezen');
+  const counts = mensen.map(p=>({
+    persoon:p,
+    cnt: taken.filter(t=>!t.klaar && (t.persoon===p||t.persoon2===p) && dagen.some(ds=>taakActiefOp(t,ds))).length
+  }));
+  const max = Math.max(1, ...counts.map(c=>c.cnt));
+  el.innerHTML = counts.map(c=>`
+    <div class="werkdruk-row">
+      <span class="werkdruk-naam" style="${persStyle(c.persoon)}">${esc(c.persoon)}</span>
+      <div class="werkdruk-bar-wrap"><div class="werkdruk-bar" style="width:${c.cnt?Math.round(c.cnt/max*100):0}%;background:${persColor(c.persoon)}"></div></div>
+      <span class="werkdruk-cnt">${c.cnt}</span>
+    </div>`).join('');
+}
+
 function tHTML(t, ctxDate){
-  const heeftTijd = !isRangeTask(t) && isGeldigeTijd(t.tijd);
-  const dlInfo = t.datum && !heeftTijd && !isRangeTask(t) ? `<span class="t-time">📅 ${formatShortDate(t.datum)}</span>` : '';
+  const heeftTijd = !isRangeTask(t) && !isRecurring(t) && isGeldigeTijd(t.tijd);
+  const dlInfo = t.datum && !heeftTijd && !isRangeTask(t) && !isRecurring(t) ? `<span class="t-time">📅 ${formatShortDate(t.datum)}</span>` : '';
+  const klaar = effectiveKlaar(t, ctxDate);
   return `
-    <div class="task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
+    <div class="task prio-${t.prio} ${klaar?'klaar':''}" data-id="${t.id}" draggable="true"
          ondragstart="onDragStart(event,${t.id},'${ctxDate||''}')" ondragend="onDragEnd(event)">
-      <div class="t-check" onclick="event.stopPropagation();toggleKlaar(${t.id})">${t.klaar?'✓':''}</div>
+      <div class="t-check" onclick="event.stopPropagation();toggleKlaar(${t.id},'${ctxDate||''}')">${klaar?'✓':''}</div>
       <div class="t-body" onclick="openModal(${t.id})">
         <div class="t-title">${esc(t.titel)}</div>
         <div class="t-meta">
           ${heeftTijd?`<span class="t-time">⏱ ${esc(t.tijd)}</span>`:dlInfo}
           ${multiDayBadgeHTML(t, ctxDate)}
+          ${recurBadgeHTML(t)}
           ${persBadgesHTML(t,'t-pers')}
           <span class="t-project ${projClass(t.project)}">${esc(t.project||'Distrivers')}</span>
+          ${linkIconHTML(t)}
         </div>
       </div>
       <div class="t-actions">
@@ -861,7 +1028,7 @@ function renderDag(){
   const ft=gf(), day=ft.filter(t=>taakActiefOp(t,currentDate));
   let html='';
   // Meerdaagse taken tellen altijd als "hele dag", ongeacht een eventueel tijdveld.
-  const untimed=day.filter(t=>isRangeTask(t)||!isGeldigeTijd(t.tijd));
+  const untimed=day.filter(t=>isRangeTask(t)||isRecurring(t)||!isGeldigeTijd(t.tijd));
   // "Hele dag" drop zone — altijd zichtbaar zodat je items hier naartoe kunt slepen
   html+=`<div class="untimed-zone" data-target="untimed" data-date="${currentDate}"
               ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToUntimed(event,'${currentDate}')">`;
@@ -873,7 +1040,7 @@ function renderDag(){
   }
   html+='</div>';
   HOURS.forEach(h=>{
-    const tasks=day.filter(t=>!isRangeTask(t)&&tijdStr(t.tijd)===h);
+    const tasks=day.filter(t=>!isRangeTask(t)&&!isRecurring(t)&&tijdStr(t.tijd)===h);
     html+=`<div class="timeslot"><div class="ts-time">${h}</div><div class="ts-lane" data-target="slot" data-date="${currentDate}" data-time="${h}"
               ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropToSlot(event,'${currentDate}','${h}')">`;
     if(tasks.length)tasks.forEach(t=>{html+=tHTML(t,currentDate)});
@@ -916,7 +1083,7 @@ function renderWeek(){
       <div class="wd-head">
         <div class="wd-day-name">${DNL[d.getDay()]}</div>
         <div class="wd-day-num">${d.getDate()}</div>
-        <div class="wd-cnt">${day.filter(t=>!t.klaar).length} ${day.filter(t=>!t.klaar).length===1?'taak':'taken'}</div>
+        <div class="wd-cnt">${day.filter(t=>!effectiveKlaar(t,ds)).length} ${day.filter(t=>!effectiveKlaar(t,ds)).length===1?'taak':'taken'}</div>
         ${vrijVandaag.length?`<div class="wd-vrij">🌴 ${vrijVandaag.map(esc).join(', ')}</div>`:''}
       </div>
       <div class="wd-body" data-date="${ds}"
@@ -924,16 +1091,19 @@ function renderWeek(){
            ondblclick="quickAdd('${ds}','')" onclick="goToDayFromWeek('${ds}')">`;
     if(day.length===0)html+='<div class="wd-empty">leeg</div>';
     else day.forEach(t=>{
-      const heeftTijd = !isRangeTask(t) && isGeldigeTijd(t.tijd);
-      html+=`<div class="wd-task prio-${t.prio} ${t.klaar?'klaar':''}" data-id="${t.id}" draggable="true"
+      const heeftTijd = !isRangeTask(t) && !isRecurring(t) && isGeldigeTijd(t.tijd);
+      const klaar = effectiveKlaar(t,ds);
+      html+=`<div class="wd-task prio-${t.prio} ${klaar?'klaar':''}" data-id="${t.id}" draggable="true"
            ondragstart="onDragStart(event,${t.id},'${ds}')" ondragend="onDragEnd(event)">
         <div class="wd-row">
-          <div class="wd-check" onclick="event.stopPropagation();toggleKlaar(${t.id})">${t.klaar?'✓':''}</div>
+          <div class="wd-check" onclick="event.stopPropagation();toggleKlaar(${t.id},'${ds}')">${klaar?'✓':''}</div>
           <div style="flex:1;min-width:0" onclick="event.stopPropagation();openModal(${t.id})">
             <div class="wd-t-title">${esc(t.titel)}</div>
             ${heeftTijd?`<span class="wd-time">⏱ ${esc(t.tijd)}</span>`:''}
             ${isRangeTask(t)?`<span class="wd-multi">${taskStatusLabel(t,ds)} · dag ${dagNummerInRange(t,ds)}/${dagenInRange(t)}</span>`:''}
+            ${isRecurring(t)?`<span class="wd-multi">🔁 ${t.herhaling==='wekelijks'?'Wekelijks':'Maandelijks'}</span>`:''}
             ${persBadgesHTML(t,'wd-pers')}
+            ${linkIconHTML(t)}
           </div>
         </div>
       </div>`;
@@ -954,6 +1124,48 @@ function getISOWeek(d){
 }
 
 function goToDayFromWeek(ds){currentDate=ds;setView('dag')}
+
+/* ─── MAANDWEERGAVE ─── */
+function renderMaand(){
+  const d = pd(currentDate);
+  const jaar = d.getFullYear(), maand = d.getMonth();
+  document.getElementById('tb-date').textContent = MNL[maand].charAt(0).toUpperCase()+MNL[maand].slice(1)+' '+jaar;
+  document.getElementById('main-title-extra').textContent = MNL[maand]+' '+jaar;
+  document.getElementById('main-sub').textContent = 'Klik op een dag om hem in detail te zien.';
+
+  const eersteVanMaand = new Date(jaar, maand, 1);
+  const laatsteVanMaand = new Date(jaar, maand+1, 0);
+  const rasterStart = startOfWeek(fmtDate(eersteVanMaand));
+  // Laatste (Mon-Fri) week die de laatste dag van de maand bevat
+  let rasterEind = startOfWeek(fmtDate(laatsteVanMaand));
+  rasterEind = addDays(rasterEind, 4);
+
+  const koppen = ['Ma','Di','Wo','Do','Vr'];
+  document.getElementById('month-head-row').innerHTML = koppen.map(k=>`<div class="month-head-cell">${k}</div>`).join('');
+
+  const ft = gf();
+  const today = fmtDate(new Date());
+  let html='';
+  let cursor = rasterStart;
+  while(cursor <= rasterEind){
+    for(let i=0;i<5;i++){
+      const ds = addDays(cursor,i);
+      const dObj = pd(ds);
+      const buitenMaand = dObj.getMonth()!==maand;
+      const dagTaken = ft.filter(t=>taakActiefOp(t,ds) && !effectiveKlaar(t,ds));
+      const vrijVandaag = wieVrijOp(ds);
+      const MAX_CHIPS = 3;
+      html += `<div class="month-day ${buitenMaand?'other-month':''} ${ds===today?'today':''}" onclick="goToDayFromWeek('${ds}')">
+        <div class="month-daynum">${dObj.getDate()}${dObj.getDate()===1?' '+MNL_SHORT[dObj.getMonth()]:''}</div>
+        ${vrijVandaag.length?`<div class="month-vrij">🌴 ${vrijVandaag.map(esc).join(', ')}</div>`:''}
+        ${dagTaken.slice(0,MAX_CHIPS).map(t=>`<div class="month-chip prio-${t.prio}">${esc(t.titel)}</div>`).join('')}
+        ${dagTaken.length>MAX_CHIPS?`<div class="month-more">+${dagTaken.length-MAX_CHIPS} meer</div>`:''}
+      </div>`;
+    }
+    cursor = addDays(cursor, 7);
+  }
+  document.getElementById('month-grid').innerHTML = html;
+}
 
 /* ─── TABEL VIEW (Alle taken / Backlog) ─── */
 let tableSort = { col: 'datum', dir: 'asc' };
@@ -1011,25 +1223,29 @@ function fmtDeadline(t){
   const today = new Date(); today.setHours(0,0,0,0);
   const diff = Math.round((d - today)/86400000);
   const txt = d.getDate()+' '+MNL_SHORT[d.getMonth()];
+  if(isRecurring(t)) return txt; // herhalende taken hebben geen 'verlopen' status
   if(diff < 0) return `<span class="urgent">${txt}</span>`;
   if(diff <= 2 && !t.klaar) return `<span class="urgent">${txt}</span>`;
   return txt;
 }
 
-function trHTML(t){
+function trHTML(t, refDatum){
+  const ds = refDatum || fmtDate(new Date());
+  const klaar = effectiveKlaar(t, ds);
   return `
-    <div class="tr prio-${t.prio} ${t.klaar?'klaar':''}" onclick="openModal(${t.id})">
-      <div class="cell-titel" title="${esc(t.titel)}">${esc(t.titel)}${isRangeTask(t)?` <span class="t-multi" style="margin-left:4px">${dagenInRange(t)} dagen</span>`:''}</div>
+    <div class="tr prio-${t.prio} ${klaar?'klaar':''}" onclick="openModal(${t.id})">
+      <div class="cell-titel" title="${esc(t.titel)}">${esc(t.titel)}${isRangeTask(t)?` <span class="t-multi" style="margin-left:4px">${dagenInRange(t)} dagen</span>`:''}${isRecurring(t)?` <span class="t-multi" style="margin-left:4px">🔁 ${t.herhaling==='wekelijks'?'wekelijks':'maandelijks'}</span>`:''}${linkIconHTML(t)}</div>
       <div>${persBadgesHTML(t,'t-pers')}</div>
       <div class="t-project ${projClass(t.project)}" style="font-size:10px">${esc(t.project||'Distrivers')}</div>
       <div class="cell-prio ${t.prio}">${t.prio}</div>
       <div class="cell-deadline">${fmtDeadline(t)}</div>
-      <div class="cell-edit" onclick="event.stopPropagation();toggleKlaar(${t.id})" title="Afvinken">${t.klaar?'✓':'○'}</div>
+      <div class="cell-edit" onclick="event.stopPropagation();toggleKlaar(${t.id},'${ds}')" title="Afvinken">${klaar?'✓':'○'}</div>
     </div>`;
 }
 
 function renderAlle(){
-  const open = gf().filter(t=>!t.klaar);
+  const today = fmtDate(new Date());
+  const open = gf().filter(t=>!effectiveKlaar(t,today) && matchesSearch(t));
   document.getElementById('tb-date').textContent = `${open.length} open taken`;
   document.getElementById('main-title-extra').textContent = '';
   document.getElementById('main-sub').textContent = 'Klik op een kolomkop om te sorteren. Klik op een rij om te bewerken. Afgevinkte taken staan in het Archief.';
@@ -1037,11 +1253,12 @@ function renderAlle(){
   const sorted = sortTaken(open);
   const body = document.getElementById('table-body-alle');
   if(sorted.length===0) body.innerHTML = '<div class="table-empty">Geen open taken. Top!</div>';
-  else body.innerHTML = sorted.map(trHTML).join('');
+  else body.innerHTML = sorted.map(t=>trHTML(t,today)).join('');
 }
 
 function renderArchief(){
-  const arch = gf().filter(t=>t.klaar);
+  const today = fmtDate(new Date());
+  const arch = gf().filter(t=>effectiveKlaar(t,today) && matchesSearch(t));
   document.getElementById('tb-date').textContent = `${arch.length} afgevinkte taken`;
   document.getElementById('main-title-extra').textContent = '';
   document.getElementById('main-sub').textContent = 'Afgevinkte taken. Vink een taak weer uit om hem terug te zetten naar open.';
@@ -1049,11 +1266,11 @@ function renderArchief(){
   const sorted = sortTaken(arch);
   const body = document.getElementById('table-body-archief');
   if(sorted.length===0) body.innerHTML = '<div class="table-empty">Nog niets gearchiveerd.</div>';
-  else body.innerHTML = sorted.map(trHTML).join('');
+  else body.innerHTML = sorted.map(t=>trHTML(t,today)).join('');
 }
 
 function renderBacklogView(){
-  const bl = gf().filter(t=>!t.datum);
+  const bl = gf().filter(t=>!t.datum && matchesSearch(t));
   document.getElementById('tb-date').textContent = `${bl.length} taken in backlog`;
   document.getElementById('main-title-extra').textContent = '';
   document.getElementById('main-sub').textContent = 'Taken zonder geplande datum. Klik op een rij om een deadline toe te voegen.';
@@ -1061,15 +1278,16 @@ function renderBacklogView(){
   const sorted = sortTaken(bl);
   const body = document.getElementById('table-body-backlog');
   if(sorted.length===0) body.innerHTML = '<div class="table-empty">Geen taken in backlog. Top!</div>';
-  else body.innerHTML = sorted.map(trHTML).join('');
+  else body.innerHTML = sorted.map(t=>trHTML(t)).join('');
 }
 
 /* ─── RENDER & VIEW SWITCHING ─── */
 
 function renderViewCounts(){
-  document.getElementById('vc-alle').textContent = taken.filter(t=>!t.klaar).length;
-  document.getElementById('vc-backlog').textContent = taken.filter(t=>!t.datum && !t.klaar).length;
-  document.getElementById('vc-archief').textContent = taken.filter(t=>t.klaar).length;
+  const today = fmtDate(new Date());
+  document.getElementById('vc-alle').textContent = taken.filter(t=>!effectiveKlaar(t,today)).length;
+  document.getElementById('vc-backlog').textContent = taken.filter(t=>!t.datum && !effectiveKlaar(t,today)).length;
+  document.getElementById('vc-archief').textContent = taken.filter(t=>effectiveKlaar(t,today)).length;
 }
 
 function render(){
@@ -1077,12 +1295,21 @@ function render(){
   renderPersFilter();
   renderViewCounts();
   renderVrijeDagenLijst();
+  renderWerkdruk();
   document.querySelectorAll('#filter-prio .filter-btn').forEach(b=>{
-    b.classList.toggle('active',b.dataset.prio===fPrio);
-    b.onclick=()=>{fPrio=b.dataset.prio;render()};
+    const val=b.dataset.prio;
+    const actief = val==='alle' ? fPrio.size===0 : fPrio.has(val);
+    b.classList.toggle('active',actief);
+    b.onclick=()=>{
+      if(val==='alle'){ fPrio.clear(); }
+      else if(fPrio.has(val)){ fPrio.delete(val); }
+      else { fPrio.add(val); }
+      render();
+    };
   });
   if(view==='dag') renderDag();
   else if(view==='week') renderWeek();
+  else if(view==='maand') renderMaand();
   else if(view==='alle') renderAlle();
   else if(view==='backlog') renderBacklogView();
   else if(view==='archief') renderArchief();
@@ -1093,6 +1320,7 @@ function setView(v){
   // Bovenbalk-toggle
   document.getElementById('vt-dag').classList.toggle('active',v==='dag');
   document.getElementById('vt-week').classList.toggle('active',v==='week');
+  document.getElementById('vt-maand').classList.toggle('active',v==='maand');
   // Zijmenu-knoppen
   document.querySelectorAll('#view-menu .view-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.view===v);
@@ -1100,19 +1328,28 @@ function setView(v){
   // Containers
   document.getElementById('view-dag').style.display      = v==='dag'     ? 'block' : 'none';
   document.getElementById('view-week').style.display     = v==='week'    ? 'block' : 'none';
+  document.getElementById('view-maand').style.display    = v==='maand'   ? 'block' : 'none';
   document.getElementById('view-alle').style.display     = v==='alle'    ? 'block' : 'none';
   document.getElementById('view-backlog').style.display  = v==='backlog' ? 'block' : 'none';
   document.getElementById('view-archief').style.display  = v==='archief' ? 'block' : 'none';
   // Navigatie-knoppen verbergen voor tabel-views (geen datum-navigatie zinvol)
-  const showNav = v==='dag' || v==='week';
+  const showNav = v==='dag' || v==='week' || v==='maand';
   document.querySelectorAll('.tb-nav .nav-btn').forEach(b=> b.style.display = showNav ? '' : 'none');
   document.querySelector('.today-btn').style.display = showNav ? '' : 'none';
+  // Zoekbalk/export/print alleen tonen bij tabel-weergaven
+  const isTableView = v==='alle' || v==='backlog' || v==='archief';
+  document.getElementById('table-toolbar').classList.toggle('show', isTableView);
   render();
 }
 
 function navigate(dir){
-  if(view!=='dag' && view!=='week') return;
-  currentDate=addDays(currentDate,view==='dag'?dir:dir*7);
+  if(view==='dag') currentDate=addDays(currentDate,dir);
+  else if(view==='week') currentDate=addDays(currentDate,dir*7);
+  else if(view==='maand'){
+    const d=pd(currentDate);
+    d.setMonth(d.getMonth()+dir);
+    currentDate=fmtDate(d);
+  } else return;
   render();
 }
 function goToday(){currentDate=fmtDate(new Date());render()}
@@ -1122,6 +1359,8 @@ function openModal(id,prefDate,prefTime){
   editingId=id||null;
   document.getElementById('modal-title').textContent=id?'Taak bewerken':'Nieuwe taak';
   document.getElementById('btn-del').style.display=id?'block':'none';
+  document.getElementById('btn-dup').style.display=id?'block':'none';
+  document.getElementById('vrij-waarschuwing').classList.remove('show');
 
   const ps=document.getElementById('f-pers');
   ps.innerHTML=TEAMLEDEN.map(p=>`<option>${p}</option>`).join('');
@@ -1140,6 +1379,7 @@ function openModal(id,prefDate,prefTime){
     if(!t){alert('Taak niet gevonden, mogelijk net verwijderd.');return}
     document.getElementById('f-titel').value=t.titel;
     document.getElementById('f-omschr').value=t.omschr||'';
+    document.getElementById('f-link').value=t.link||'';
     document.getElementById('f-project').value=t.project||'Distrivers';
     document.getElementById('f-prio').value=t.prio;
     document.getElementById('f-pers').value=t.persoon;
@@ -1147,6 +1387,7 @@ function openModal(id,prefDate,prefTime){
     document.getElementById('f-startdatum').value=t.startdatum||'';
     document.getElementById('f-datum').value=t.datum||'';
     document.getElementById('f-tijd').value=tijdStr(t.tijd);
+    document.getElementById('f-herhaling').value=t.herhaling||'';
     if(t.laatst_gewijzigd_door){
       let when = '';
       if(t.laatst_gewijzigd_op){
@@ -1158,6 +1399,7 @@ function openModal(id,prefDate,prefTime){
   }else{
     document.getElementById('f-titel').value='';
     document.getElementById('f-omschr').value='';
+    document.getElementById('f-link').value='';
     document.getElementById('f-project').value='Distrivers';
     document.getElementById('f-prio').value='Midden';
     document.getElementById('f-pers').value=TEAMLEDEN[0];
@@ -1165,9 +1407,11 @@ function openModal(id,prefDate,prefTime){
     document.getElementById('f-startdatum').value='';
     document.getElementById('f-datum').value=prefDate||currentDate;
     document.getElementById('f-tijd').value=prefTime||'';
+    document.getElementById('f-herhaling').value='';
     metaBox.style.display='none';
   }
   document.getElementById('modal-bg').classList.add('show');
+  checkVrijWaarschuwing();
   setTimeout(()=>document.getElementById('f-titel').focus(),50);
 }
 function closeModal(){document.getElementById('modal-bg').classList.remove('show');editingId=null}
@@ -1177,13 +1421,19 @@ async function saveTask(){
   if(!titel){alert('Geef de taak een titel.');return}
   const startdatum=document.getElementById('f-startdatum').value||'';
   const datum=document.getElementById('f-datum').value||'';
+  const herhaling=document.getElementById('f-herhaling').value||'';
   if(startdatum && datum && startdatum>datum){
     alert('De startdatum ligt na de einddatum/deadline. Pas een van beide aan.');
+    return;
+  }
+  if(herhaling && startdatum && startdatum!==datum){
+    alert('Herhaling kan niet gecombineerd worden met een meerdaagse taak (startdatum). Laat de startdatum leeg, of zet herhaling op "Nooit".');
     return;
   }
   const data={
     titel,
     omschr:document.getElementById('f-omschr').value.trim(),
+    link:document.getElementById('f-link').value.trim(),
     project:document.getElementById('f-project').value,
     prio:document.getElementById('f-prio').value,
     persoon:document.getElementById('f-pers').value,
@@ -1191,6 +1441,7 @@ async function saveTask(){
     startdatum,
     datum,
     tijd:document.getElementById('f-tijd').value||'',
+    herhaling,
   };
   const btn = document.getElementById('btn-save');
   btn.disabled=true; btn.textContent='Opslaan...';
@@ -1225,14 +1476,20 @@ async function delTask(){
   }
 }
 
-async function toggleKlaar(id){
+async function toggleKlaar(id, ds){
   // Optimistic update — het scherm reageert direct, we wachten niet op de server.
   const t=taken.find(x=>String(x.id)===String(id));
   if(!t) return;
-  const vorigeKlaar=t.klaar;
-  t.klaar=!t.klaar; render();
+  const refDatum = ds || fmtDate(new Date());
+  const vorigeKlaar=t.klaar, vorigAfgerond=t.laatst_afgerond_datum;
+  if(isRecurring(t)){
+    t.laatst_afgerond_datum = (t.laatst_afgerond_datum===refDatum) ? '' : refDatum;
+  } else {
+    t.klaar=!t.klaar;
+  }
+  render();
   try{
-    const r = await apiPost('toggle', {id});
+    const r = await apiPost('toggle', {id, datum:refDatum});
     if(!r.ok) throw new Error(r.error);
     // Alleen dit ene object bijwerken met de servergegevens (wie/wanneer),
     // i.p.v. de hele planning opnieuw op te halen. Dat maakt afvinken snel.
@@ -1240,11 +1497,75 @@ async function toggleKlaar(id){
     render();
   } catch(e){
     showError('Afvinken mislukt: '+e.message);
-    t.klaar=vorigeKlaar; render(); // revert
+    t.klaar=vorigeKlaar; t.laatst_afgerond_datum=vorigAfgerond; render(); // revert
   }
 }
 
 function quickAdd(d,t){openModal(null,d,t)}
+
+/* ─── EXPORTEREN & PRINTEN ─── */
+function csvEscape(v){
+  v = String(v==null?'':v);
+  if(/[;"\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function exportCSV(){
+  const today = fmtDate(new Date());
+  let rows, label;
+  if(view==='alle'){ rows = sortTaken(gf().filter(t=>!effectiveKlaar(t,today) && matchesSearch(t))); label='alle_taken'; }
+  else if(view==='backlog'){ rows = sortTaken(gf().filter(t=>!t.datum && matchesSearch(t))); label='backlog'; }
+  else if(view==='archief'){ rows = sortTaken(gf().filter(t=>effectiveKlaar(t,today) && matchesSearch(t))); label='archief'; }
+  else return;
+  const headers = ['Titel','Persoon','Extra persoon','Project','Prioriteit','Startdatum','Deadline','Tijd','Herhaling','Status','Omschrijving','Link'];
+  const csvRows = [headers.join(';')];
+  rows.forEach(t=>{
+    csvRows.push([
+      t.titel, t.persoon, t.persoon2||'', t.project, t.prio,
+      t.startdatum||'', t.datum||'', t.tijd||'',
+      t.herhaling||'', effectiveKlaar(t,today)?'Klaar':'Open', t.omschr||'', t.link||''
+    ].map(csvEscape).join(';'));
+  });
+  const csvContent = '\uFEFF'+csvRows.join('\r\n');
+  const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download = `marcom_${label}_${today}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function printView(){ window.print(); }
+
+/* ─── TAAK DUPLICEREN ─── */
+async function duplicateTask(){
+  if(!editingId) return;
+  const t = taken.find(x=>String(x.id)===String(editingId));
+  if(!t) return;
+  const data = {
+    titel: t.titel+' (kopie)',
+    omschr: t.omschr||'',
+    project: t.project,
+    prio: t.prio,
+    persoon: t.persoon,
+    persoon2: t.persoon2||'',
+    startdatum: t.startdatum||'',
+    datum: t.datum||'',
+    tijd: t.tijd||'',
+    herhaling: t.herhaling||'',
+    link: t.link||'',
+  };
+  const btn = document.getElementById('btn-dup');
+  btn.disabled=true; btn.textContent='Bezig...';
+  try{
+    const r = await apiPost('create', {taak:data});
+    if(!r.ok) throw new Error(r.error);
+    closeModal();
+    await loadTaken();
+  } catch(e){
+    showError('Dupliceren mislukt: '+e.message);
+  } finally {
+    btn.disabled=false; btn.textContent='⧉ Dupliceren';
+  }
+}
 
 /* ─── VRIJE DAGEN MODAL ─── */
 function openVrijModal(){
